@@ -1,0 +1,170 @@
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Orbitron:wght@400;700;900&display=swap');
+
+.game-container {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  cursor: none;
+}
+
+/* Overlay before game starts */
+.game-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  pointer-events: all;
+}
+
+.game-instructions {
+  text-align: center;
+  color: #fff;
+  max-width: 500px;
+  padding: 40px;
+}
+
+.game-instructions h1 {
+  font-family: 'Bangers', cursive;
+  font-size: 4rem;
+  color: #ffd700;
+  margin: 0 0 8px 0;
+  letter-spacing: 6px;
+  text-shadow: 4px 4px 0 #000, -2px -2px 0 #ff00ff;
+}
+
+.game-instructions .subtitle {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  color: #00ffff;
+  letter-spacing: 4px;
+  margin: 0 0 40px 0;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+.controls {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid #333;
+  padding: 24px;
+  margin: 30px 0;
+  border-radius: 4px;
+}
+
+.controls p {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.95rem;
+  margin: 12px 0;
+  color: #aaa;
+}
+
+.controls strong {
+  color: #ffd700;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+.start-btn {
+  font-family: 'Bangers', cursive;
+  font-size: 1.5rem;
+  letter-spacing: 3px;
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  color: #000;
+  border: none;
+  padding: 16px 48px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+  animation: pulse 2s infinite;
+}
+
+.start-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(255, 0, 255, 0.8);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(255, 0, 255, 0.8);
+  }
+}
+
+/* HUD during gameplay */
+.game-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.hud-corner {
+  position: absolute;
+  padding: 20px;
+}
+
+.hud-corner.top-left {
+  top: 0;
+  left: 0;
+}
+
+.hud-corner.top-right {
+  top: 0;
+  right: 0;
+}
+
+.hud-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #00ffff;
+  letter-spacing: 3px;
+  text-shadow: 0 0 10px #00ffff;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 8px 16px;
+  border: 1px solid #00ffff;
+}
+
+.exit-btn {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #ff0088;
+  border: 2px solid #ff0088;
+  padding: 10px 24px;
+  cursor: pointer;
+  pointer-events: all;
+  z-index: 60;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.exit-btn:hover {
+  background: rgba(255, 0, 136, 0.2);
+  transform: scale(1.05);
+}
+
+/* Crosshair */
+.game-container::after {
+  content: '+';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+  z-index: 40;
+  font-family: monospace;
+  font-weight: bold;
+}

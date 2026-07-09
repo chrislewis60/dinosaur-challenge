@@ -1,12 +1,60 @@
-.counter {
+/* ─── Game Root ─── */
+#game-root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* ─── Game Area (placeholder) ─── */
+.game-area {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a0a;
+  color: #ffd700;
+  font-family: 'Bangers', 'Impact', cursive;
+  gap: 24px;
+}
+
+.game-area h1 {
+  font-size: clamp(2.5rem, 10vw, 5rem);
+  letter-spacing: 8px;
+  color: #ffd700;
+  text-shadow: 5px 5px 0 #000, -2px -2px 0 #000;
+  margin: 0;
+}
+
+.game-area p {
+  color: #555;
+  font-family: 'Comic Neue', 'Arial', sans-serif;
+  font-size: 0.95rem;
+}
+
+.game-area button {
+  background: transparent;
+  border: 3px solid #ffd700;
+  color: #ffd700;
+  font-family: 'Bangers', cursive;
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  padding: 8px 24px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 #000;
+  transition: background 0.15s, color 0.15s;
+}
+
+.game-area button:hover {
+  background: #ffd700;
+  color: #000;
+}
+
+/* ─── legacy placeholder below (unused) ─── */
+.counter-legacy {
   font-size: 16px;
   padding: 5px 10px;
   border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
   border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
 
   &:hover {
     border-color: var(--accent-border);

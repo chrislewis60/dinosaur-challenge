@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Sky } from '@react-three/drei'
+import { Physics } from '@react-three/rapier'
 import './Game.css'
 import ArcadeRoom from './ArcadeRoom'
 import FirstPersonControls from './FirstPersonControls'
@@ -18,11 +19,39 @@ function CeilingLights() {
   )
 }
 
-export default function Game({ onExit }) {
+export default function Game({ onExit, onMissionStart }) {
   const [isLocked, setIsLocked] = useState(false)
   const [nearChair, setNearChair] = useState(false)
   const [sitting, setSitting] = useState(false)
-  const chairNudge = useRef({ x: 0, z: 0 })
+  const [missionReady, setMissionReady] = useState(false)
+  const chairBodyRef = useRef()
+  const missionTimerRef = useRef(null)
+
+  // Right-click while sitting + mission ready triggers the mission cutscene
+  useEffect(() => {
+    if (!sitting || !missionReady) return
+    const handleMouseDown = (e) => {
+      if (e.button === 2) onMissionStart?.()
+    }
+    const preventContext = (e) => e.preventDefault()
+    document.addEventListener('mousedown', handleMouseDown)
+    document.addEventListener('contextmenu', preventContext)
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown)
+      document.removeEventListener('contextmenu', preventContext)
+    }
+  }, [sitting, missionReady, onMissionStart])
+
+  // 1.5 s loading phase, then reveal mission button
+  useEffect(() => {
+    if (sitting) {
+      missionTimerRef.current = setTimeout(() => setMissionReady(true), 1500)
+    } else {
+      clearTimeout(missionTimerRef.current)
+      setMissionReady(false)
+    }
+    return () => clearTimeout(missionTimerRef.current)
+  }, [sitting])
 
   return (
     <div className="game-container">
@@ -51,7 +80,7 @@ export default function Game({ onExit }) {
           </div>
           {nearChair && (
             <div className="hud-corner" style={{ bottom: 60, left: '50%', transform: 'translateX(-50%)', top: 'auto' }}>
-              <div className="hud-label">{sitting ? '↓ STAND UP' : '↓ SIT DOWN'}</div>
+              <div className="hud-label">{sitting ? '\u2193 STAND UP' : '\u2193 SIT DOWN'}</div>
             </div>
           )}
         </div>
@@ -65,16 +94,17 @@ export default function Game({ onExit }) {
         <ambientLight intensity={3} />
         <CeilingLights />
 
-        <ArcadeRoom chairNudge={chairNudge} />
-        <PlayerBody />
-        
-        <FirstPersonControls
-          onLock={() => setIsLocked(true)}
-          onUnlock={() => setIsLocked(false)}
-          onNearChair={setNearChair}
-          onSitting={setSitting}
-          chairNudge={chairNudge}
-        />
+        <Physics gravity={[0, -9.81, 0]}>
+          <ArcadeRoom chairBodyRef={chairBodyRef} sitting={sitting} missionReady={missionReady} />
+          <PlayerBody />
+          <FirstPersonControls
+            onLock={() => setIsLocked(true)}
+            onUnlock={() => setIsLocked(false)}
+            onNearChair={setNearChair}
+            onSitting={setSitting}
+            chairBodyRef={chairBodyRef}
+          />
+        </Physics>
       </Canvas>
 
       {isLocked && (

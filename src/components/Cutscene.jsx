@@ -24,7 +24,7 @@ const PANELS = [
     caption: null,
     alert: null,
     speech: null,
-    hero: false,
+    hero: true,
   },
   {
     id: 2,
@@ -36,7 +36,7 @@ const PANELS = [
     caption: 'REX VOLTAGE — Undefeated Champion of the Underground Arcade Leagues.',
     alert: null,
     speech: 'One more round...\nand the crown is MINE.',
-    hero: false,
+    hero: true,
   },
   {
     id: 3,
@@ -48,7 +48,7 @@ const PANELS = [
     caption: null,
     alert: '⚠  OMNI-ARC SYSTEM BREACH  ⚠\n      ALL RECORDS PURGED',
     speech: null,
-    hero: false,
+    hero: true,
   },
   {
     id: 4,
@@ -60,7 +60,7 @@ const PANELS = [
     caption: null,
     alert: null,
     speech: null,
-    hero: false,
+    hero: true,
   },
   {
     id: 5,
@@ -183,7 +183,7 @@ export default function Cutscene({ onStart }) {
               {panel.sfx      && <div className="sfx-word">{panel.sfx}</div>}
               {panel.alert    && <div className="alert-box"><pre>{panel.alert}</pre></div>}
 
-              {/* Hero portrait — only on panel 5 which has no bg */}
+              {/* Hero portrait — only on panels without a background image */}
               {panel.hero && !panel.bg && (
                 <img src={HERO_IMG} alt="Rex Voltage" className="hero-portrait"
                   onError={(e) => { e.currentTarget.src = FALLBACK_IMG }} />

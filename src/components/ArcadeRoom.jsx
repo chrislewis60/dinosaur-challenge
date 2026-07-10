@@ -1,7 +1,8 @@
 import { useTexture, RoundedBox } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, useEffect } from 'react'
 import * as THREE from 'three'
+import { RigidBody, CuboidCollider } from '@react-three/rapier'
 
 // ── Dirty texture generators ──────────────────────────────────────────────────
 
@@ -121,7 +122,84 @@ function CeilingLight({ position, color = '#fff8e7', intensity = 2.5 }) {
 
 // ── Room props ────────────────────────────────────────────────────────────────
 
-function GamingDesk({ position, rotation = [0, 0, 0] }) {
+function drawCenterMonitor(canvas, sitting, missionReady) {
+  const ctx = canvas.getContext('2d')
+  const W = 860, H = 510
+  ctx.clearRect(0, 0, W, H)
+  ctx.fillStyle = '#020812'
+  ctx.fillRect(0, 0, W, H)
+
+  if (!sitting) {
+    ctx.fillStyle = 'rgba(0, 255, 65, 0.55)'
+    ctx.font = '16px "Share Tech Mono", monospace'
+    ctx.fillText('> SYSTEM READY_', 30, 70)
+    return
+  }
+
+  // Shared header
+  ctx.fillStyle = 'rgba(120, 200, 255, 0.45)'
+  ctx.font = '18px "Share Tech Mono", monospace'
+  ctx.fillText('> OMNI-ARC TERMINAL v2.087', 30, 48)
+  ctx.strokeStyle = 'rgba(120, 200, 255, 0.18)'
+  ctx.lineWidth = 1
+  ctx.beginPath(); ctx.moveTo(30, 62); ctx.lineTo(830, 62); ctx.stroke()
+
+  if (!missionReady) {
+    ctx.fillStyle = '#a8daff'
+    ctx.font = '24px "Share Tech Mono", monospace'
+    ctx.fillText('AUTHENTICATING...', 30, 135)
+    ctx.fillText('SCANNING ARCADE RECORDS...', 30, 178)
+    ctx.fillText('LOADING MISSION DATA..._', 30, 221)
+    ctx.strokeStyle = 'rgba(120, 200, 255, 0.25)'
+    ctx.lineWidth = 2
+    ctx.strokeRect(30, 268, 800, 10)
+    ctx.shadowBlur = 10; ctx.shadowColor = '#a8daff'
+    ctx.fillStyle = 'rgba(120, 200, 255, 0.6)'
+    ctx.fillRect(30, 268, 500, 10)
+    ctx.shadowBlur = 0
+  } else {
+    ctx.textAlign = 'center'
+    ctx.fillStyle = '#a8daff'
+    ctx.font = 'bold 36px "Exo 2", sans-serif'
+    ctx.shadowBlur = 24; ctx.shadowColor = 'rgba(120, 200, 255, 0.9)'
+    ctx.fillText('!! MISSION AVAILABLE !!', W / 2, 165)
+    ctx.shadowBlur = 0
+    // button border
+    ctx.strokeStyle = 'rgba(120, 200, 255, 0.55)'
+    ctx.lineWidth = 1.5
+    ctx.strokeRect(W / 2 - 350, 255, 700, 74)
+    ctx.fillStyle = 'rgba(120, 200, 255, 0.05)'
+    ctx.fillRect(W / 2 - 350, 255, 700, 74)
+    // button text
+    ctx.fillStyle = '#a8daff'
+    ctx.font = 'bold 21px "Exo 2", sans-serif'
+    ctx.shadowBlur = 8; ctx.shadowColor = 'rgba(120,200,255,0.6)'
+    ctx.fillText('\u25b6  START MISSION', W / 2, 300)
+    ctx.shadowBlur = 0
+    // subtitle
+    ctx.font = '22px "Share Tech Mono", monospace'
+    ctx.fillStyle = 'rgba(120, 200, 255, 0.65)'
+    ctx.fillText('GET EVERY HIGH SCORE BACK', W / 2, 372)
+    ctx.font = '13px "Share Tech Mono", monospace'
+    ctx.fillStyle = 'rgba(120, 200, 255, 0.3)'
+    ctx.fillText('RIGHT-CLICK TO START MISSION', W / 2, 440)
+    ctx.textAlign = 'left'
+  }
+}
+
+function GamingDesk({ position, rotation = [0, 0, 0], sitting = false, missionReady = false }) {
+  const centerCanvas = useMemo(() => {
+    const c = document.createElement('canvas')
+    c.width = 860; c.height = 510
+    return c
+  }, [])
+  const centerTex = useMemo(() => new THREE.CanvasTexture(centerCanvas), [centerCanvas])
+
+  useEffect(() => {
+    drawCenterMonitor(centerCanvas, sitting, missionReady)
+    centerTex.needsUpdate = true
+  }, [sitting, missionReady, centerCanvas, centerTex])
+
   return (
     <group position={position} rotation={rotation}>
       {/* Rounded desk surface */}
@@ -155,9 +233,9 @@ function GamingDesk({ position, rotation = [0, 0, 0] }) {
         <RoundedBox args={[0.92, 0.56, 0.04]} radius={0.015} castShadow>
           <meshStandardMaterial color="#0d0d0d" roughness={0.2} metalness={0.3} />
         </RoundedBox>
-        <mesh position={[0, 0, 0.026]}><boxGeometry args={[0.86, 0.51, 0.01]} /><meshStandardMaterial color="#000" emissive="#00ff41" emissiveIntensity={0.7} /></mesh>
+        <mesh position={[0, 0, 0.026]}><boxGeometry args={[0.86, 0.51, 0.01]} /><meshStandardMaterial map={centerTex} roughness={0.85} metalness={0} /></mesh>
         <mesh position={[0, -0.35, 0.08]}><cylinderGeometry args={[0.03, 0.04, 0.16, 10]} /><meshStandardMaterial color="#222" metalness={0.5} /></mesh>
-        <pointLight position={[0, 0, 0.4]} color="#00ff41" intensity={1.2} distance={2.5} />
+        <pointLight position={[0, 0, 0.4]} color={sitting ? '#a8daff' : '#00ff41'} intensity={sitting ? 2.0 : 1.2} distance={2.5} />
       </group>
 
       {/* Left monitor */}
@@ -165,8 +243,8 @@ function GamingDesk({ position, rotation = [0, 0, 0] }) {
         <RoundedBox args={[0.72, 0.46, 0.04]} radius={0.012} castShadow>
           <meshStandardMaterial color="#0d0d0d" roughness={0.2} metalness={0.3} />
         </RoundedBox>
-        <mesh position={[0, 0, 0.026]}><boxGeometry args={[0.66, 0.41, 0.01]} /><meshStandardMaterial color="#000" emissive="#0055ff" emissiveIntensity={0.8} /></mesh>
-        <pointLight position={[0, 0, 0.3]} color="#0055ff" intensity={0.7} distance={2} />
+        <mesh position={[0, 0, 0.026]}><boxGeometry args={[0.66, 0.41, 0.01]} /><meshStandardMaterial color={sitting ? '#cce4ff' : '#000'} emissive={sitting ? '#cce4ff' : '#000000'} emissiveIntensity={sitting ? 0.85 : 0} roughness={0.85} metalness={0} /></mesh>
+        <pointLight position={[0, 0, 0.3]} color={sitting ? '#cce4ff' : '#0055ff'} intensity={sitting ? 1.2 : 0.7} distance={2} />
       </group>
 
       {/* Right monitor */}
@@ -174,8 +252,8 @@ function GamingDesk({ position, rotation = [0, 0, 0] }) {
         <RoundedBox args={[0.72, 0.46, 0.04]} radius={0.012} castShadow>
           <meshStandardMaterial color="#0d0d0d" roughness={0.2} metalness={0.3} />
         </RoundedBox>
-        <mesh position={[0, 0, 0.026]}><boxGeometry args={[0.66, 0.41, 0.01]} /><meshStandardMaterial color="#000" emissive="#ff2200" emissiveIntensity={0.6} /></mesh>
-        <pointLight position={[0, 0, 0.3]} color="#ff2200" intensity={0.5} distance={2} />
+        <mesh position={[0, 0, 0.026]}><boxGeometry args={[0.66, 0.41, 0.01]} /><meshStandardMaterial color={sitting ? '#cce4ff' : '#000'} emissive={sitting ? '#cce4ff' : '#000000'} emissiveIntensity={sitting ? 0.85 : 0} roughness={0.85} metalness={0} /></mesh>
+        <pointLight position={[0, 0, 0.3]} color={sitting ? '#cce4ff' : '#ff2200'} intensity={sitting ? 1.2 : 0.5} distance={2} />
       </group>
 
       {/* RGB keyboard */}
@@ -224,22 +302,24 @@ function GamingDesk({ position, rotation = [0, 0, 0] }) {
   )
 }
 
-function GamingChair({ position, rotation = [0, 0, 0], nudgeRef }) {
-  const groupRef = useRef()
-  const BASE = { x: position[0], z: position[2] }
-
-  useFrame(() => {
-    if (!groupRef.current || !nudgeRef) return
-    // Clamp nudge to ±0.5
-    nudgeRef.current.x = Math.max(-0.5, Math.min(0.5, nudgeRef.current.x))
-    nudgeRef.current.z = Math.max(-0.5, Math.min(0.5, nudgeRef.current.z))
-    // Apply nudge — stays where pushed, no spring-back
-    groupRef.current.position.x = BASE.x + nudgeRef.current.x
-    groupRef.current.position.z = BASE.z + nudgeRef.current.z
-  })
-
+function GamingChair({ position, rotation = [0, 0, 0], bodyRef }) {
   return (
-    <group ref={groupRef} position={position} rotation={rotation}>
+    <RigidBody
+      ref={bodyRef}
+      type="dynamic"
+      position={position}
+      rotation={rotation}
+      lockRotations
+      linearDamping={10}
+      angularDamping={10}
+      friction={1.2}
+      restitution={0}
+    >
+      {/* Collider covering seat + backrest — high density makes it heavy */}
+      <CuboidCollider args={[0.3, 0.87, 0.32]} position={[0, 0.87, -0.12]} density={40} />
+      {/* Collider covering the star base */}
+      <CuboidCollider args={[0.46, 0.06, 0.46]} position={[0, 0.06, 0]} density={40} />
+    <group rotation={[0, 0, 0]}>
       {/* Seat cushion */}
       <RoundedBox position={[0, 0.48, 0]} args={[0.58, 0.1, 0.56]} radius={0.04} castShadow>
         <meshStandardMaterial color="#150a0a" roughness={0.85} />
@@ -299,6 +379,7 @@ function GamingChair({ position, rotation = [0, 0, 0], nudgeRef }) {
         </group>
       ))}
     </group>
+    </RigidBody>
   )
 }
 
@@ -322,7 +403,7 @@ function ServerRack({ position }) {
 
 // ── Main Room ─────────────────────────────────────────────────────────────────
 
-export default function ArcadeRoom({ chairNudge }) {
+export default function ArcadeRoom({ chairBodyRef, sitting = false, missionReady = false }) {
   const wallTexture = useTexture('/chrislewis60_a_dino_playing_a_futureistic_game_--v_8.1_5a6897a9-48a8-4f99-896d-d781db395241_2.png')
   wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping
   wallTexture.repeat.set(1.5, 1)
@@ -375,11 +456,24 @@ export default function ArcadeRoom({ chairNudge }) {
       </mesh>
 
       {/* ── GAMING DESK & CHAIR ── */}
-      <GamingDesk position={[0, 0, -3.8]} />
-      <GamingChair position={[0, 0, -2.6]} rotation={[0, Math.PI, 0]} nudgeRef={chairNudge} />
+      <GamingDesk position={[0, 0, -3.8]} sitting={sitting} missionReady={missionReady} />
+      <GamingChair position={[0, 0, -2.6]} rotation={[0, Math.PI, 0]} bodyRef={chairBodyRef} />
 
       {/* ── SERVER RACK — left corner ── */}
       <ServerRack position={[-4.3, 0.9, -3.5]} />
+
+      {/* ── STATIC PHYSICS COLLIDERS ── */}
+      {/* Floor */}
+      <RigidBody type="fixed">
+        <CuboidCollider args={[5, 0.1, 5]} position={[0, -0.1, 0]} />
+      </RigidBody>
+      {/* Walls */}
+      <RigidBody type="fixed">
+        <CuboidCollider args={[0.1, 3, 5]} position={[-5, 1.5, 0]} />
+        <CuboidCollider args={[0.1, 3, 5]} position={[5, 1.5, 0]} />
+        <CuboidCollider args={[5, 3, 0.1]} position={[0, 1.5, -5]} />
+        <CuboidCollider args={[5, 3, 0.1]} position={[0, 1.5, 5]} />
+      </RigidBody>
     </group>
   )
 }

@@ -456,6 +456,19 @@
   50%       { box-shadow: 6px 6px 0 #000, 0 0 70px rgba(255,200,0,1.0); }
 }
 
+/* City panel — dino lit by neon city glow */
+.theme-city .hero-portrait {
+  border-color: #4488ff;
+  box-shadow: 6px 6px 0 #000, 0 0 40px rgba(50,100,255,0.7);
+}
+
+/* Dark panel — dino is barely visible, drained and ominous */
+.theme-dark .hero-portrait {
+  filter: brightness(0.35) saturate(0.3) contrast(1.15);
+  border-color: #330033;
+  box-shadow: 4px 4px 0 #000, 0 0 22px rgba(100,0,160,0.55);
+}
+
 /* ─── Narration Box — sits in text section ─── */
 .narration-box {
   background: transparent;

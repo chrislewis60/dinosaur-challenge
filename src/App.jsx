@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react'
 import Cutscene from './components/Cutscene'
+import MissionCutscene from './components/MissionCutscene'
 import Game from './components/Game'
 import './App.css'
 
@@ -12,7 +13,13 @@ function App() {
         <Cutscene onStart={() => setScene('game')} />
       )}
       {scene === 'game' && (
-        <Game onExit={() => setScene('cutscene')} />
+        <Game
+          onExit={() => setScene('cutscene')}
+          onMissionStart={() => setScene('mission-cutscene')}
+        />
+      )}
+      {scene === 'mission-cutscene' && (
+        <MissionCutscene onComplete={() => setScene('game')} />
       )}
     </div>
   )

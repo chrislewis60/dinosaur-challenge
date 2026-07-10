@@ -3,22 +3,28 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { PointerLockControls } from '@react-three/drei'
 import * as THREE from 'three'
 
-export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onSitting, chairNudge }) {
+export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onSitting, chairBodyRef }) {
   const { camera } = useThree()
   const controlsRef = useRef()
 
   const STAND_HEIGHT = 1.6
   const SIT_HEIGHT   = 0.72
+  const SIT_RADIUS   = 1.8
 
   const moveSpeed      = 5
+  const keys           = useRef({ w: false, a: false, s: false, d: false, shift: false })
   const velocity       = useRef(new THREE.Vector3())
   const smoothVelocity = useRef(new THREE.Vector3())
   const direction      = useRef(new THREE.Vector3())
   const isSitting      = useRef(false)
   const targetHeight   = useRef(STAND_HEIGHT)
   const nearChair      = useRef(false)
+  const sittingFrames  = useRef(0)
 
-  const keys = useRef({ w: false, a: false, s: false, d: false, shift: false })
+  const _chairPos      = new THREE.Vector3()
+  const _monitorCenter = new THREE.Vector3()
+  const _lookMat       = new THREE.Matrix4()
+  const _targetQuat    = new THREE.Quaternion()
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -28,6 +34,15 @@ export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onS
       if (key === 's') keys.current.s = true
       if (key === 'd') keys.current.d = true
       if (key === 'shift') keys.current.shift = true
+      // ↓ = sit/stand when within radius of chair (works whether locked or not)
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        if (nearChair.current) {
+          isSitting.current = !isSitting.current
+          targetHeight.current = isSitting.current ? SIT_HEIGHT : STAND_HEIGHT
+          if (onSitting) onSitting(isSitting.current)
+        }
+      }
     }
     const handleKeyUp = (e) => {
       const key = e.key.toLowerCase()
@@ -37,50 +52,58 @@ export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onS
       if (key === 'd') keys.current.d = false
       if (key === 'shift') keys.current.shift = false
     }
-    // Down arrow to sit / stand
-    const onKey = (e) => {
-      if (e.key === 'ArrowDown' && nearChair.current) {
-        isSitting.current = !isSitting.current
-        targetHeight.current = isSitting.current ? SIT_HEIGHT : STAND_HEIGHT
-        if (onSitting) onSitting(isSitting.current)
-      }
-    }
-
     document.addEventListener('keydown', handleKeyDown)
     document.addEventListener('keyup', handleKeyUp)
-    document.addEventListener('keydown', onKey)
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
       document.removeEventListener('keyup', handleKeyUp)
-      document.removeEventListener('keydown', onKey)
     }
   }, [])
 
   useFrame((state, delta) => {
     if (!controlsRef.current?.isLocked) return
 
-    // Proximity check for chair — use dynamic position
-    const chairCX = 0 + (chairNudge?.current?.x ?? 0)
-    const chairCZ = -2.6 + (chairNudge?.current?.z ?? 0)
-    const chairCurrentPos = new THREE.Vector3(chairCX, 0, chairCZ)
-    const dist = camera.position.distanceTo(chairCurrentPos)
-    const isNear = dist < 15
+    // Height lerp — only when standing (sitting position is driven by chair)
+    if (!isSitting.current) {
+      camera.position.y += (targetHeight.current - camera.position.y) * 0.12
+    }
+
+    // Proximity check — read actual rigid body position if available
+    const chairTrans = chairBodyRef?.current?.translation()
+    const chairCX = chairTrans?.x ?? 0
+    const chairCZ = chairTrans?.z ?? -2.6
+    _chairPos.set(chairCX, camera.position.y, chairCZ)
+    const dist = camera.position.distanceTo(_chairPos)
+    const isNear = dist < SIT_RADIUS
     if (isNear !== nearChair.current) {
       nearChair.current = isNear
       if (onNearChair) onNearChair(isNear)
     }
-    // Stand up automatically if walked away
+    // Auto-stand if walked away while sitting
     if (!isNear && isSitting.current) {
       isSitting.current = false
       targetHeight.current = STAND_HEIGHT
       if (onSitting) onSitting(false)
     }
 
-    // Smooth camera height transition
-    camera.position.y += (targetHeight.current - camera.position.y) * 0.12
-
-    // No walking while sitting
-    if (isSitting.current) return
+    // Zoom camera in toward all three monitors while sitting
+    if (isSitting.current) {
+      sittingFrames.current++
+      const ct = chairBodyRef?.current?.translation()
+      const baseX = ct?.x ?? 0
+      // Glide to a spot where all three screens fill the view comfortably
+      camera.position.x += (baseX       - camera.position.x) * 0.06
+      camera.position.y += (1.25        - camera.position.y) * 0.06
+      camera.position.z += (-3.05       - camera.position.z) * 0.06
+      // For the first ~2 s, smoothly steer toward the centre screen
+      if (sittingFrames.current < 120) {
+        _monitorCenter.set(baseX, 1.25, -4.05)
+        _lookMat.lookAt(camera.position, _monitorCenter, new THREE.Vector3(0, 1, 0))
+        camera.quaternion.slerp(_targetQuat.setFromRotationMatrix(_lookMat), 0.06)
+      }
+      return
+    }
+    sittingFrames.current = 0
 
     // Movement
     direction.current.set(0, 0, 0)
@@ -109,7 +132,6 @@ export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onS
     camera.position.z = Math.max(-4.5, Math.min(4.5, camera.position.z))
 
     // AABB collision resolution
-    // Returns the push vector if colliding, null otherwise
     const resolveBox = (px, pz, cx, cz, hw, hd) => {
       const r = 0.32
       const dx = px - cx, dz = pz - cz
@@ -122,14 +144,16 @@ export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onS
       return null
     }
 
-    // Desk at [0, 0, -3.8] — half extents 1.25 × 0.45
+    // Desk collision
     resolveBox(camera.position.x, camera.position.z, 0, -3.8, 1.25, 0.45)
 
-    // Chair collision — follow dynamic position
+    // Chair collision — gentle push via physics impulse
     const chairHit = resolveBox(camera.position.x, camera.position.z, chairCX, chairCZ, 0.38, 0.38)
-    if (chairHit && chairNudge) {
-      chairNudge.current.x -= chairHit.x * 0.025
-      chairNudge.current.z -= chairHit.z * 0.025
+    if (chairHit && chairBodyRef?.current) {
+      chairBodyRef.current.applyImpulse(
+        { x: -chairHit.x * 1.2, y: 0, z: -chairHit.z * 1.2 },
+        true
+      )
     }
   })
 

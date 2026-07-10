@@ -133,7 +133,151 @@
   background: rgba(120, 200, 255, 0.08);
 }
 
-/* Crosshair */
+/* ── Monitor screen overlay (shown while sitting) ── */
+.monitor-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 70;
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: all;
+  cursor: default;
+}
+
+.monitor-panel {
+  position: relative;
+  width: min(600px, 85vw);
+  background: rgba(0, 8, 0, 0.95);
+  border: 1px solid #00ff41;
+  box-shadow: 0 0 48px rgba(0, 255, 65, 0.25), inset 0 0 80px rgba(0, 255, 65, 0.03);
+  padding: 40px 48px;
+  font-family: 'Share Tech Mono', monospace;
+  color: #00ff41;
+  overflow: hidden;
+}
+
+/* CRT scanlines */
+.monitor-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.12) 3px,
+    rgba(0, 0, 0, 0.12) 4px
+  );
+  pointer-events: none;
+}
+
+.monitor-header {
+  font-size: 0.7rem;
+  letter-spacing: 3px;
+  color: rgba(0, 255, 65, 0.45);
+  margin-bottom: 30px;
+  text-transform: uppercase;
+}
+
+.monitor-log {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 28px;
+  min-height: 72px;
+}
+
+.log-line {
+  font-size: 0.88rem;
+  letter-spacing: 2px;
+  opacity: 0;
+  animation: fade-line 0.3s ease forwards;
+}
+
+@keyframes fade-line {
+  to { opacity: 1; }
+}
+
+.cursor {
+  animation: blink 0.7s step-end infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.monitor-bar-track {
+  height: 3px;
+  background: rgba(0, 255, 65, 0.15);
+  overflow: hidden;
+}
+
+.monitor-bar {
+  height: 100%;
+  width: 0;
+  background: #00ff41;
+  box-shadow: 0 0 10px #00ff41;
+  animation: fill-bar 1.5s linear forwards;
+}
+
+@keyframes fill-bar {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+.monitor-alert {
+  font-size: 1.05rem;
+  letter-spacing: 5px;
+  color: #00ff41;
+  margin-bottom: 34px;
+  animation: glow-pulse 1.4s ease-in-out infinite alternate, fade-line 0.4s ease forwards;
+}
+
+@keyframes glow-pulse {
+  from { text-shadow: 0 0 6px #00ff41; }
+  to   { text-shadow: 0 0 20px #00ff41, 0 0 40px rgba(0, 255, 65, 0.4); }
+}
+
+.mission-btn {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.82rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: transparent;
+  color: #00ff41;
+  border: 1px solid #00ff41;
+  padding: 16px 24px;
+  cursor: pointer;
+  width: 100%;
+  box-shadow: 0 0 18px rgba(0, 255, 65, 0.18);
+  transition: background 0.2s, box-shadow 0.2s;
+  animation: fade-in-up 0.4s ease forwards;
+  margin-bottom: 16px;
+}
+
+.mission-btn:hover {
+  background: rgba(0, 255, 65, 0.1);
+  box-shadow: 0 0 36px rgba(0, 255, 65, 0.5);
+}
+
+.monitor-hint {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 3px;
+  color: rgba(0, 255, 65, 0.35);
+  text-align: center;
+  margin: 0;
+  animation: fade-in-up 0.5s 0.1s ease both;
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Crosshair ── */
 .game-container::after {
   content: '+';
   position: absolute;

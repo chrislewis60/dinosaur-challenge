@@ -137,7 +137,7 @@ const sr = (seed) => {
   return v - Math.floor(v)
 }
 
-// ── Crate ─────────────────────────────────────────────────────────────────────
+// ── Crate (static visual — used on shelves) ───────────────────────────────────
 
 function Crate({ position, rotation = [0, 0, 0], w=1.1, h=1.1, d=1.1, color='#7a5c18', open=false }) {
   return (
@@ -146,7 +146,6 @@ function Crate({ position, rotation = [0, 0, 0], w=1.1, h=1.1, d=1.1, color='#7a
         <boxGeometry args={[w, h, d]} />
         <meshStandardMaterial color={color} roughness={0.95} />
       </mesh>
-      {/* Slightly ajar lid */}
       {open && (
         <mesh position={[0, h / 2 + 0.02, -d * 0.22]} rotation={[0.38, 0, 0]} castShadow>
           <boxGeometry args={[w, 0.045, d * 0.52]} />
@@ -154,6 +153,26 @@ function Crate({ position, rotation = [0, 0, 0], w=1.1, h=1.1, d=1.1, color='#7a
         </mesh>
       )}
     </group>
+  )
+}
+
+// ── PhysicsCrate (independent dynamic body — used on floor) ──────────────────
+
+function PhysicsCrate({ position, w=1.1, h=1.1, d=1.1, color='#7a5c18' }) {
+  return (
+    <RigidBody
+      type="dynamic"
+      position={position}
+      linearDamping={12}
+      angularDamping={10}
+      restitution={0.05}
+    >
+      <CuboidCollider args={[w/2, h/2, d/2]} />
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[w, h, d]} />
+        <meshStandardMaterial color={color} roughness={0.95} />
+      </mesh>
+    </RigidBody>
   )
 }
 
@@ -257,11 +276,33 @@ export default function Warehouse() {
         <ShelfRow key={x} x={x} z={SHELF_Z} length={SHELF_LEN} />
       ))}
 
-      {/* Shelf colliders */}
+      {/* Shelf colliders — full depth (1.0) and full height */}
       <RigidBody type="fixed">
         {ROW_X.map(x => (
-          <CuboidCollider key={x} args={[0.28, 2.3, SHELF_LEN/2]} position={[x, 2.3, SHELF_Z]} />
+          <CuboidCollider key={x} args={[0.5, 2.35, SHELF_LEN/2]} position={[x, 2.35, SHELF_Z]} />
         ))}
+
+        {/* Back-wall crate stacks */}
+        <CuboidCollider args={[W - 1, 1.65, 0.65]} position={[0, 1.65, -22]} />
+
+        {/* Side-wall crate stacks */}
+        <CuboidCollider args={[0.65, 1.1, 14]} position={[-29, 1.1, -4]} />
+        <CuboidCollider args={[0.65, 1.1, 14]} position={[ 29, 1.1, -4]} />
+
+        {/* Row-end floor crate piles */}
+        {ROW_X.map(x => (
+          <CuboidCollider key={x} args={[0.9, 0.9, 1.2]} position={[x, 0.9, -20]} />
+        ))}
+
+        {/* Barrel clusters */}
+        {[-16,-5,6].flatMap(z =>
+          [-26,26].map(x => (
+            <CuboidCollider key={`bc-${x}-${z}`} args={[0.32, 0.85, 0.32]} position={[x, 0.85, z]} />
+          ))
+        )}
+
+        {/* Loading dock */}
+        <CuboidCollider args={[7, 0.18, 3]} position={[0, 0.18, 20]} />
       </RigidBody>
 
       {/* Crates on shelves — gaps, wonky angles, occasional open lid */}
@@ -297,33 +338,29 @@ export default function Warehouse() {
         )
       )}
 
-      {/* Floor crates at back end of each row */}
+      {/* Floor crates at back end of each row — every box is its own physics body */}
       {ROW_X.flatMap(x =>
-        [-21, -19].map(z => (
-          <group key={`${x}-${z}`}>
-            <Crate position={[x-0.6, 0.55, z]} />
-            <Crate position={[x+0.6, 0.55, z]} />
-            <Crate position={[x,     1.65, z]} />
-          </group>
-        ))
+        [-21, -19].map(z => [
+          <PhysicsCrate key={`${x}-${z}-l`} position={[x - 0.6, 0.56, z]} />,
+          <PhysicsCrate key={`${x}-${z}-r`} position={[x + 0.6, 0.56, z]} />,
+          <PhysicsCrate key={`${x}-${z}-t`} position={[x,       1.66, z]} />,
+        ])
       )}
 
-      {/* Crate stacks along back wall */}
-      {[-24,-18,-12,-6,0,6,12,18,24].map(x => (
-        <group key={`bw-${x}`}>
-          <Crate position={[x, 0.55, -22]} />
-          <Crate position={[x, 1.65, -22]} />
-          <Crate position={[x, 2.75, -22]} />
-        </group>
-      ))}
+      {/* Crate stacks along back wall — individual physics crates */}
+      {[-24,-18,-12,-6,0,6,12,18,24].map(x => [
+        <PhysicsCrate key={`bw-${x}-0`} position={[x, 0.56, -22]} />,
+        <PhysicsCrate key={`bw-${x}-1`} position={[x, 1.66, -22]} color="#5a4412" />,
+        <PhysicsCrate key={`bw-${x}-2`} position={[x, 2.76, -22]} color="#4e3b0e" />,
+      ])}
 
-      {/* Crates along side walls */}
-      {[-18,-10,-2,6,14].map(z => (
-        <group key={`walls-${z}`}>
-          <Crate position={[-29, 0.55, z]} /><Crate position={[-29, 1.65, z]} />
-          <Crate position={[ 29, 0.55, z]} /><Crate position={[ 29, 1.65, z]} />
-        </group>
-      ))}
+      {/* Crates along side walls — individual physics crates */}
+      {[-18,-10,-2,6,14].flatMap(z => [
+        <PhysicsCrate key={`lw-${z}-0`} position={[-29, 0.56, z]} />,
+        <PhysicsCrate key={`lw-${z}-1`} position={[-29, 1.66, z]} color="#5a4412" />,
+        <PhysicsCrate key={`rw-${z}-0`} position={[ 29, 0.56, z]} />,
+        <PhysicsCrate key={`rw-${z}-1`} position={[ 29, 1.66, z]} color="#5a4412" />,
+      ])}
 
       {/* Barrels in corner aisles */}
       {[-16,-5,6].flatMap(z =>

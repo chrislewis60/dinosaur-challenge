@@ -1,13 +1,55 @@
-import { useState } from 'react'
-import { Canvas } from '@react-three/fiber'
-import { Physics } from '@react-three/rapier'
+import { useState, useMemo, useRef } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { Physics, RigidBody, CapsuleCollider } from '@react-three/rapier'
 import './Game.css'
 import Warehouse from './Warehouse'
 import FirstPersonControls from './FirstPersonControls'
 import PlayerBody from './PlayerBody'
 
+// Kinematic capsule that follows the camera so Rapier can push dynamic crates
+function PhysicsPlayer() {
+  const { camera } = useThree()
+  const bodyRef = useRef()
+  useFrame(() => {
+    if (!bodyRef.current) return
+    bodyRef.current.setNextKinematicTranslation({
+      x: camera.position.x,
+      y: camera.position.y - 0.8,
+      z: camera.position.z,
+    })
+  })
+  return (
+    <RigidBody ref={bodyRef} type="kinematicPosition" colliders={false}>
+      <CapsuleCollider args={[0.45, 0.35]} />
+    </RigidBody>
+  )
+}
+
 export default function WarehouseLevel({ onExit }) {
   const [isLocked, setIsLocked] = useState(false)
+
+  // AABB boxes that block the player (cx, cz = centre; hw, hd = half-extents)
+  const staticColliders = useMemo(() => [
+    // Five shelf rows (depth 1.0 → hw 0.5, length 30 → hd 15, centred at z=-6)
+    { cx: -22, cz: -6, hw: 0.5, hd: 15 },
+    { cx: -11, cz: -6, hw: 0.5, hd: 15 },
+    { cx:   0, cz: -6, hw: 0.5, hd: 15 },
+    { cx:  11, cz: -6, hw: 0.5, hd: 15 },
+    { cx:  22, cz: -6, hw: 0.5, hd: 15 },
+    // Back-wall crate stacks
+    { cx:   0, cz: -22, hw: 27, hd: 0.7 },
+    // Side-wall crate stacks
+    { cx: -29, cz:  -4, hw: 0.7, hd: 14 },
+    { cx:  29, cz:  -4, hw: 0.7, hd: 14 },
+    // Row-end floor crate piles
+    { cx: -22, cz: -20, hw: 1.0, hd: 1.3 },
+    { cx: -11, cz: -20, hw: 1.0, hd: 1.3 },
+    { cx:   0, cz: -20, hw: 1.0, hd: 1.3 },
+    { cx:  11, cz: -20, hw: 1.0, hd: 1.3 },
+    { cx:  22, cz: -20, hw: 1.0, hd: 1.3 },
+    // Loading dock platform
+    { cx:   0, cz:  20, hw: 7.0, hd: 3.0 },
+  ], [])
 
   return (
     <div className="game-container">
@@ -48,12 +90,14 @@ export default function WarehouseLevel({ onExit }) {
         <ambientLight intensity={0.3} />
         <Physics gravity={[0, -9.81, 0]}>
           <Warehouse />
+          <PhysicsPlayer />
           <PlayerBody />
           <FirstPersonControls
             onLock={() => setIsLocked(true)}
             onUnlock={() => setIsLocked(false)}
             roomBounds={27}
             furnitureCollision={false}
+            staticColliders={staticColliders}
           />
         </Physics>
       </Canvas>

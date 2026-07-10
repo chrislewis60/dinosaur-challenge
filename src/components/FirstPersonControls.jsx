@@ -3,7 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { PointerLockControls } from '@react-three/drei'
 import * as THREE from 'three'
 
-export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onSitting, chairBodyRef, roomBounds = 4.5, furnitureCollision = true }) {
+export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onSitting, chairBodyRef, roomBounds = 4.5, furnitureCollision = true, staticColliders = [] }) {
   const { camera } = useThree()
   const controlsRef = useRef()
 
@@ -180,6 +180,11 @@ export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onS
         )
       }
     }
+
+    // World-space static colliders (shelves, crates, etc.)
+    staticColliders.forEach(({ cx, cz, hw, hd }) => {
+      resolveBox(camera.position.x, camera.position.z, cx, cz, hw, hd)
+    })
   })
 
   return (

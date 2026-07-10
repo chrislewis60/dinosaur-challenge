@@ -25,18 +25,6 @@ const PANELS = [
     hero: true,
   },
   {
-    id: 2,
-    theme: 'hero',
-    bg: null,
-    location: null,
-    narration: null,
-    sfx: 'CLICK!',
-    caption: null,
-    alert: null,
-    speech: 'Every score.\nEvery record.\nThey\'re ALL mine.',
-    hero: true,
-  },
-  {
     id: 3,
     theme: 'alert',
     bg: BG,

@@ -383,6 +383,56 @@ function GamingChair({ position, rotation = [0, 0, 0], bodyRef }) {
   )
 }
 
+// ── Bean bag (dynamic physics body with jiggle) ───────────────────────────────
+
+function BeanBag() {
+  const bodyRef   = useRef()
+  const mainRef   = useRef()
+  const wobbleE   = useRef(0)
+
+  useFrame(({ clock }) => {
+    if (!bodyRef.current || !mainRef.current) return
+    const v = bodyRef.current.linvel()
+    const speed = Math.sqrt(v.x * v.x + v.z * v.z)
+    // Energy builds up while moving, decays when still
+    wobbleE.current = wobbleE.current * 0.90 + speed * 0.10
+    const w = Math.sin(clock.elapsedTime * 6) * wobbleE.current * 0.055
+    mainRef.current.scale.set(1 + w, 0.58 - w * 0.4, 1 + w)
+  })
+
+  return (
+    <RigidBody
+      ref={bodyRef}
+      type="dynamic"
+      position={[-3.2, 0.28, 3.2]}
+      lockRotations
+      linearDamping={25}
+      angularDamping={25}
+      restitution={0}
+      gravityScale={2}
+    >
+      {/* Small flat collider — just the base of the bag */}
+      <CuboidCollider args={[0.8, 0.28, 0.8]} />
+      {/* Main body — visual offset so bottom sits at floor level */}
+      <mesh ref={mainRef} position={[0, 0.36, 0]} castShadow receiveShadow scale={[1, 0.58, 1]}>
+        <sphereGeometry args={[1.1, 28, 20]} />
+        <meshStandardMaterial color="#2a0a3a" roughness={0.98} />
+      </mesh>
+      {/* Upper puffy lobe */}
+      <mesh position={[0, 0.24, 0.07]} scale={[0.78, 0.38, 0.78]} castShadow>
+        <sphereGeometry args={[1.1, 24, 16]} />
+        <meshStandardMaterial color="#220833" roughness={0.98} />
+      </mesh>
+      {/* Neon seam */}
+      <mesh scale={[1.01, 0.58, 1.01]}>
+        <torusGeometry args={[1.1, 0.035, 8, 52]} />
+        <meshStandardMaterial color="#cc00ff" emissive="#cc00ff" emissiveIntensity={0.7} />
+      </mesh>
+      <pointLight color="#cc00ff" intensity={0.6} distance={0.8} />
+    </RigidBody>
+  )
+}
+
 function ServerRack({ position }) {
   return (
     <group position={position}>
@@ -397,6 +447,212 @@ function ServerRack({ position }) {
         </group>
       ))}
       <pointLight position={[0, 0, 0.4]} color="#00ff00" intensity={0.4} distance={1.5} />
+    </group>
+  )
+}
+
+// ── Pizza box ────────────────────────────────────────────────────────────────
+
+function makePizzaTexture() {
+  const s = 256, cv = document.createElement('canvas')
+  cv.width = s; cv.height = s
+  const ctx = cv.getContext('2d')
+  const cx = s/2, cy = s/2, r = s/2 - 6
+
+  // Crust ring
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2)
+  ctx.fillStyle = '#c8763d'; ctx.fill()
+  // Sauce
+  ctx.beginPath(); ctx.arc(cx, cy, r*0.87, 0, Math.PI*2)
+  ctx.fillStyle = '#cc2800'; ctx.fill()
+  // Cheese
+  ctx.beginPath(); ctx.arc(cx, cy, r*0.81, 0, Math.PI*2)
+  ctx.fillStyle = '#f5c540'; ctx.fill()
+
+  // 8 slices — leave 2 missing (eaten)
+  const N = 8, missing = new Set([1, 4])
+  for (let i = 0; i < N; i++) {
+    if (!missing.has(i)) continue
+    const a0 = (i/N)*Math.PI*2 - Math.PI/2
+    const a1 = ((i+1)/N)*Math.PI*2 - Math.PI/2
+    ctx.beginPath(); ctx.moveTo(cx, cy)
+    ctx.arc(cx, cy, r, a0, a1); ctx.closePath()
+    ctx.fillStyle = '#c8763d'; ctx.fill()
+  }
+
+  // Slice cut lines
+  ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.lineWidth = 2
+  for (let i = 0; i < N; i++) {
+    const a = (i/N)*Math.PI*2 - Math.PI/2
+    ctx.beginPath(); ctx.moveTo(cx, cy)
+    ctx.lineTo(cx + Math.cos(a)*r, cy + Math.sin(a)*r); ctx.stroke()
+  }
+
+  // Pepperoni
+  [[0.42,0.06],[0.18,0.38],[-0.36,0.22],[-0.42,-0.14],[0.12,-0.40],[0.38,-0.28]].forEach(([px,py]) => {
+    ctx.beginPath(); ctx.arc(cx+px*r*0.78, cy+py*r*0.78, r*0.09, 0, Math.PI*2)
+    ctx.fillStyle = '#8B1A1A'; ctx.fill()
+    ctx.strokeStyle = '#5a0a0a'; ctx.lineWidth = 0.8; ctx.stroke()
+  })
+
+  return new THREE.CanvasTexture(cv)
+}
+
+function PizzaBox({ position, rotation = [0, 0, 0] }) {
+  const pizzaTex = useMemo(() => makePizzaTexture(), [])
+  const BOX = 0.52, H = 0.03, WALL = 0.04
+  return (
+    <group position={position} rotation={rotation}>
+      {/* Box bottom */}
+      <mesh position={[0, H/2, 0]} castShadow receiveShadow>
+        <boxGeometry args={[BOX, H, BOX]} />
+        <meshStandardMaterial color="#c8a06e" roughness={0.92} />
+      </mesh>
+      {/* Box side walls */}
+      {[[ BOX/2, WALL/2, 0,  WALL, WALL*2, BOX],
+        [-BOX/2, WALL/2, 0,  WALL, WALL*2, BOX],
+        [0, WALL/2,  BOX/2, BOX,   WALL*2, WALL],
+        [0, WALL/2, -BOX/2, BOX,   WALL*2, WALL]].map(([x,y,z,w,h,d],i)=>(
+        <mesh key={i} position={[x,y,z]} castShadow>
+          <boxGeometry args={[w,h,d]} />
+          <meshStandardMaterial color="#c8a06e" roughness={0.92} />
+        </mesh>
+      ))}
+      {/* Pizza disc */}
+      <mesh position={[0, H+0.003, 0]} rotation={[-Math.PI/2, 0, 0]}>
+        <circleGeometry args={[BOX/2 - 0.04, 28]} />
+        <meshStandardMaterial map={pizzaTex} roughness={0.82} metalness={0} />
+      </mesh>
+      {/* Open lid — pivots from back edge */}
+      <group position={[0, H, BOX/2]} rotation={[-Math.PI * 0.72, 0, 0]}>
+        <mesh position={[0, 0, -BOX/2]} castShadow>
+          <boxGeometry args={[BOX, H, BOX]} />
+          <meshStandardMaterial color="#d4b07a" roughness={0.92} />
+        </mesh>
+        {/* Inside of lid */}
+        <mesh position={[0, H*0.5, -BOX/2]}>
+          <boxGeometry args={[BOX-0.01, 0.002, BOX-0.01]} />
+          <meshStandardMaterial color="#b8904a" roughness={0.97} />
+        </mesh>
+      </group>
+    </group>
+  )
+}
+
+// ── Pac-Man arcade cabinet ────────────────────────────────────────────────────
+
+function makePacManScreen() {
+  const s = 256, c = document.createElement('canvas')
+  c.width = s; c.height = s
+  const ctx = c.getContext('2d')
+
+  // Background
+  ctx.fillStyle = '#000011'; ctx.fillRect(0, 0, s, s)
+
+  // Maze border
+  ctx.strokeStyle = '#1a1aff'; ctx.lineWidth = 4
+  ctx.strokeRect(12, 44, s - 24, s - 60)
+
+  // Title
+  ctx.fillStyle = '#ffff00'; ctx.font = 'bold 22px monospace'; ctx.textAlign = 'center'
+  ctx.fillText('PAC-MAN', s / 2, 32)
+
+  // Dots
+  ctx.fillStyle = '#ffffff'
+  for (let i = 0; i < 7; i++) {
+    ctx.beginPath(); ctx.arc(40 + i * 28, 110, 4, 0, Math.PI * 2); ctx.fill()
+  }
+
+  // Pac-Man (mid-chomp)
+  ctx.beginPath()
+  ctx.moveTo(78, 158)
+  ctx.arc(78, 158, 26, 0.45, Math.PI * 2 - 0.45)
+  ctx.closePath()
+  ctx.fillStyle = '#ffff00'; ctx.fill()
+
+  // Ghost (Blinky)
+  const gx = 185, gy = 155
+  ctx.fillStyle = '#ff0000'
+  ctx.beginPath()
+  ctx.arc(gx, gy - 10, 18, Math.PI, 0)
+  ctx.lineTo(gx + 18, gy + 12)
+  ctx.lineTo(gx + 12, gy + 7); ctx.lineTo(gx + 6, gy + 12)
+  ctx.lineTo(gx,      gy + 7); ctx.lineTo(gx - 6, gy + 12)
+  ctx.lineTo(gx - 12, gy + 7); ctx.lineTo(gx - 18, gy + 12)
+  ctx.closePath(); ctx.fill()
+  ctx.fillStyle = '#fff'
+  ctx.beginPath(); ctx.arc(gx - 6, gy - 12, 5, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.arc(gx + 6, gy - 12, 5, 0, Math.PI * 2); ctx.fill()
+  ctx.fillStyle = '#00f'
+  ctx.beginPath(); ctx.arc(gx - 5, gy - 12, 2.5, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.arc(gx + 7, gy - 12, 2.5, 0, Math.PI * 2); ctx.fill()
+
+  // Score line
+  ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.font = '14px monospace'
+  ctx.fillText('1UP   HIGH SCORE', 18, s - 28)
+  ctx.fillStyle = '#ffff00'
+  ctx.fillText('00         24680', 18, s - 10)
+
+  return new THREE.CanvasTexture(c)
+}
+
+function PacManCabinet({ position, rotation = [0, 0, 0] }) {
+  const screenTex = useMemo(() => makePacManScreen(), [])
+  return (
+    <group position={position} rotation={rotation}>
+      {/* Cabinet body */}
+      <mesh castShadow>
+        <boxGeometry args={[0.64, 1.82, 0.70]} />
+        <meshStandardMaterial color="#111" roughness={0.7} metalness={0.25} />
+      </mesh>
+      {/* Top marquee — glowing yellow */}
+      <mesh position={[0, 0.98, 0.18]}>
+        <boxGeometry args={[0.60, 0.26, 0.08]} />
+        <meshStandardMaterial color="#ffff00" emissive="#ffff00" emissiveIntensity={0.9} />
+      </mesh>
+      {/* Pac-Man text on marquee */}
+      <pointLight position={[0, 0.98, 0.35]} color="#ffee00" intensity={1.2} distance={1.4} />
+      {/* Screen bezel */}
+      <mesh position={[0, 0.32, 0.355]}>
+        <boxGeometry args={[0.50, 0.42, 0.025]} />
+        <meshStandardMaterial color="#0a0a0a" roughness={0.8} />
+      </mesh>
+      {/* Screen */}
+      <mesh position={[0, 0.32, 0.37]}>
+        <boxGeometry args={[0.44, 0.36, 0.01]} />
+        <meshStandardMaterial map={screenTex} emissive="#ffff00" emissiveIntensity={0.18} roughness={0.85} metalness={0} />
+      </mesh>
+      <pointLight position={[0, 0.32, 0.55]} color="#ffee00" intensity={0.9} distance={1.2} />
+      {/* Control panel (angled) */}
+      <mesh position={[0, -0.12, 0.32]} rotation={[-0.45, 0, 0]} castShadow>
+        <boxGeometry args={[0.60, 0.055, 0.34]} />
+        <meshStandardMaterial color="#0a0a0a" roughness={0.9} />
+      </mesh>
+      {/* Joystick */}
+      <mesh position={[-0.13, -0.04, 0.40]} castShadow>
+        <cylinderGeometry args={[0.016, 0.016, 0.11, 8]} />
+        <meshStandardMaterial color="#cc2200" roughness={0.5} />
+      </mesh>
+      <mesh position={[-0.13, 0.02, 0.40]}>
+        <sphereGeometry args={[0.028, 8, 8]} />
+        <meshStandardMaterial color="#cc2200" roughness={0.5} />
+      </mesh>
+      {/* Buttons */}
+      {[0.08, 0.17, 0.26].map((bx, i) => (
+        <mesh key={i} position={[bx, -0.04, 0.42]}>
+          <cylinderGeometry args={[0.023, 0.023, 0.03, 10]} />
+          <meshStandardMaterial
+            color={['#ffff00', '#ff2200', '#2200ff'][i]}
+            emissive={['#ffff00', '#ff2200', '#2200ff'][i]}
+            emissiveIntensity={0.5}
+          />
+        </mesh>
+      ))}
+      {/* Base */}
+      <mesh position={[0, -0.96, 0]} castShadow>
+        <boxGeometry args={[0.66, 0.10, 0.70]} />
+        <meshStandardMaterial color="#0a0a0a" roughness={0.9} />
+      </mesh>
     </group>
   )
 }
@@ -455,12 +711,26 @@ export default function ArcadeRoom({ chairBodyRef, sitting = false, missionReady
         <meshStandardMaterial map={dirtyWall} roughness={0.95} metalness={0.02} />
       </mesh>
 
+      {/* ── FRONT WALL ── */}
+      <mesh position={[0, 1.5, 5]} rotation={[0, Math.PI, 0]} receiveShadow>
+        <boxGeometry args={[10, 3, 0.1]} />
+        <meshStandardMaterial map={dirtyWall} roughness={0.95} metalness={0.02} />
+      </mesh>
+
       {/* ── GAMING DESK & CHAIR ── */}
       <GamingDesk position={[0, 0, -3.8]} sitting={sitting} missionReady={missionReady} />
       <GamingChair position={[0, 0, -2.6]} rotation={[0, Math.PI, 0]} bodyRef={chairBodyRef} />
 
       {/* ── SERVER RACK — left corner ── */}
       <ServerRack position={[-4.3, 0.9, -3.5]} />
+
+      {/* ── PIZZA BOXES — floor near gaming desk ── */}
+      <PizzaBox position={[ 1.8, 0.03, -1.6]} rotation={[0,  0.4, 0]} />
+      <PizzaBox position={[-1.4, 0.03, -0.8]} rotation={[0, -0.6, 0]} />
+
+      {/* ── PAC-MAN ARCADE CABINETS — right wall ── */}
+      <PacManCabinet position={[4.35, 0.91, -1.5]}  rotation={[0, -Math.PI / 2, 0]} />
+      <PacManCabinet position={[4.35, 0.91, -3.0]}  rotation={[0, -Math.PI / 2, 0]} />
 
       {/* ── STATIC PHYSICS COLLIDERS ── */}
       {/* Floor */}

@@ -3,7 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { PointerLockControls } from '@react-three/drei'
 import * as THREE from 'three'
 
-export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onSitting, chairBodyRef, roomBounds = 4.5, furnitureCollision = true, staticColliders = [] }) {
+export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onSitting, chairBodyRef, roomBounds = 4.5, furnitureCollision = true, staticColliders = [], platforms = [] }) {
   const { camera } = useThree()
   const controlsRef = useRef()
 
@@ -75,17 +75,33 @@ export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onS
   useFrame((state, delta) => {
     if (!controlsRef.current?.isLocked) return
 
+    // Dynamic floor height — highest platform the player is currently standing on
+    const getFloorY = () => {
+      const px = camera.position.x, pz = camera.position.z
+      let best = 0
+      for (const p of platforms) {
+        if (p.surfaceY < camera.position.y - STAND_HEIGHT + 0.35 &&
+            Math.abs(px - p.cx) < p.hw + 0.18 &&
+            Math.abs(pz - p.cz) < p.hd + 0.18) {
+          if (p.surfaceY > best) best = p.surfaceY
+        }
+      }
+      return best
+    }
+    const standY = getFloorY() + STAND_HEIGHT
+
     // Height lerp — only when standing and not mid-jump
     if (!isSitting.current && !isJumping.current) {
-      camera.position.y += (targetHeight.current - camera.position.y) * 0.12
+      camera.position.y += (standY - camera.position.y) * 0.12
     }
 
     // Jump physics
     if (isJumping.current) {
       jumpVelocity.current  += GRAVITY * delta
       camera.position.y     += jumpVelocity.current * delta
-      if (camera.position.y <= STAND_HEIGHT) {
-        camera.position.y    = STAND_HEIGHT
+      const landY = getFloorY() + STAND_HEIGHT
+      if (jumpVelocity.current < 0 && camera.position.y <= landY) {
+        camera.position.y    = landY
         jumpVelocity.current = 0
         isJumping.current    = false
       }

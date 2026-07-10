@@ -6,6 +6,10 @@ const HERO_IMG =
   '/chrislewis60_a_dino_playing_a_futureistic_game_--v_8.1_5a6897a9-48a8-4f99-896d-d781db395241_2.png'
 const BG =
   '/chrislewis60_a_dino_playing_a_futureistic_game_--v_8.1_5a6897a9-48a8-4f99-896d-d781db395241_2.png'
+// Standing dino used only on the suck-in slide
+const SUCK_DINO_IMG = '/chrislewis60_a_dino_playing_a_futureistic_game_--v_8.1_5a6897a9-48a8-4f99-896d-d781db395241_2.png'
+const MATRIX_IMG    = '/chrislewis60_a_dino_playing_a_futureistic_game_--v_8.1_5a6897a9-48a8-4f99-896d-d781db395241_0.png'
+const SUCK_BG       = '/chrislewis60_a_dino_playing_a_futureistic_game_--v_8.1_5a6897a9-48a8-4f99-896d-d781db395241_2.png'
 
 const PANELS = [
   {
@@ -47,14 +51,14 @@ const PANELS = [
   {
     id: 4,
     theme: 'suck',
-    bg: null,
+    bg: SUCK_BG,
     location: null,
     narration: null,
     sfx: 'WHOOOOSH!!',
     caption: null,
     alert: null,
     speech: 'WAIT—\nWHAT IS HAPPENING?!',
-    hero: true,
+    hero: false,
   },
   {
     id: 5,
@@ -77,7 +81,7 @@ const PANELS = [
     sfx: 'CLICK.',
     caption: null,
     alert: null,
-    speech: 'I\'m inside.\nEvery score.\nEvery legend.\nMINE.',
+    speech: 'I\'m inside.\nTime to get every score\nand every legend BACK.',
     hero: true,
   },
 ]
@@ -176,11 +180,19 @@ export default function MissionCutscene({ onComplete }) {
               {panel.alert    && <div className="alert-box"><pre>{panel.alert}</pre></div>}
 
               {panel.hero && !panel.bg && (
-                <img
-                  src={HERO_IMG}
-                  alt="Rex Voltage"
-                  className="hero-portrait"
-                />
+                panel.theme === 'suck' ? (
+                  /* Two-layer composite: blurred bg + clipped dino on top */
+                  <div className="suck-composite">
+                    <img src={MATRIX_IMG}    alt="" className="suck-matrix-bg" aria-hidden="true" />
+                    <img src={SUCK_DINO_IMG} alt="Rex Voltage" className="suck-dino-img" />
+                  </div>
+                ) : (
+                  <img
+                    src={HERO_IMG}
+                    alt="Rex Voltage"
+                    className="hero-portrait"
+                  />
+                )
               )}
 
               {panel.speech && (

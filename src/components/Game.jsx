@@ -27,18 +27,15 @@ export default function Game({ onExit, onMissionStart }) {
   const chairBodyRef = useRef()
   const missionTimerRef = useRef(null)
 
-  // Right-click while sitting + mission ready triggers the mission cutscene
+  // Left-click while sitting + mission ready triggers the mission cutscene
   useEffect(() => {
     if (!sitting || !missionReady) return
     const handleMouseDown = (e) => {
-      if (e.button === 2) onMissionStart?.()
+      if (e.button === 0) onMissionStart?.()
     }
-    const preventContext = (e) => e.preventDefault()
     document.addEventListener('mousedown', handleMouseDown)
-    document.addEventListener('contextmenu', preventContext)
     return () => {
       document.removeEventListener('mousedown', handleMouseDown)
-      document.removeEventListener('contextmenu', preventContext)
     }
   }, [sitting, missionReady, onMissionStart])
 

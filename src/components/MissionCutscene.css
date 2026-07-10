@@ -16,11 +16,17 @@
 }
 
 .comic-panel.theme-suck {
-  border-color: #00cfff;
-  box-shadow: 8px 8px 0 #000, 0 0 40px rgba(0,207,255,0.45);
+  border-color: #000;
+  box-shadow: 8px 8px 0 #000;
+  background: #f5edd0;
 }
+/* No colour overlay — clean paper background */
 .theme-suck .panel-color-overlay {
-  background: radial-gradient(ellipse at 50% 88%, rgba(255,255,255,0.95) 0%, rgba(100,220,255,0.75) 18%, rgba(2,8,18,0.88) 58%);
+  background: transparent;
+}
+/* Remove halftone dots */
+.theme-suck .panel-halftone {
+  display: none;
 }
 .theme-suck .sfx-word {
   color: #00cfff;
@@ -29,11 +35,80 @@
 }
 
 /* Suck-in animation — only fires on the full reading panel */
-.comic-panel.theme-suck .hero-portrait {
-  transform-origin: 50% 90%;
-  border-color: #00cfff;
-  box-shadow: 6px 6px 0 #000, 0 0 50px rgba(0,207,255,0.8);
-  animation: rex-suck-in 3.4s ease-in forwards;
+
+/* ── Two-layer composite ──────────────────────────────────────────────────
+   Layer 1 (.suck-bg-img)  : full image, blurred ~20px → dino disappears,
+                             leaving a convincing blurry room background
+   Layer 2 (.suck-dino-img): same image, clip-pathed to the dino character
+                             only, animated being pulled into the screen
+─────────────────────────────────────────────────────────────────────────── */
+/* Two-layer composite: matrix background + dino on top */
+.suck-composite {
+  position: relative;
+  width: min(400px, 88vw);
+  height: min(400px, 88vw);
+  overflow: hidden;
+  z-index: 3;
+}
+
+/* Matrix image — always visible, gentle brightness pulse */
+.suck-matrix-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  animation: matrix-breathe 1.4s ease-in-out infinite alternate;
+}
+@keyframes matrix-breathe {
+  from { filter: brightness(0.75); }
+  to   { filter: brightness(1.15); }
+}
+
+/* Dino layer — stacked on top, flickers to reveal matrix behind */
+.suck-dino-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center top;
+  z-index: 1;
+  transform-origin: 50% 85%;
+  /* dino-flicker controls opacity; rex-suck-in uses filter:opacity so they don't clash */
+  animation: rex-suck-in 3.4s ease-in forwards, dino-flicker 1s ease-in-out infinite;
+}
+/* Slow flicker — mostly shows dino, briefly cuts to matrix */
+@keyframes dino-flicker {
+  0%,  22%  { opacity: 1;    }
+  28%        { opacity: 0.04; }
+  34%        { opacity: 1;    }
+  68%,  72%  { opacity: 1;    }
+  77%        { opacity: 0.04; }
+  83%        { opacity: 1;    }
+  100%       { opacity: 1;    }
+}
+
+/* Glowing screen portal the dino is being pulled into */
+.comic-panel.theme-suck .panel-image-section::after {
+  content: '';
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 160px;
+  height: 100px;
+  background: linear-gradient(180deg, rgba(0,207,255,0.06) 0%, rgba(0,207,255,0.7) 100%);
+  border: 3px solid #00cfff;
+  border-radius: 4px;
+  box-shadow: 0 0 28px rgba(0,207,255,0.9), inset 0 0 20px rgba(255,255,255,0.5);
+  z-index: 5;
+  animation: screen-glow 0.65s ease-in-out infinite alternate;
+}
+@keyframes screen-glow {
+  from { box-shadow: 0 0 14px rgba(0,207,255,0.5); }
+  to   { box-shadow: 0 0 44px rgba(0,207,255,1.0), 0 0 75px rgba(0,170,255,0.45); }
 }
 /*
   Phase 1  0–10%  : dino tries to pull back — leans away from the screen
@@ -43,56 +118,96 @@
   Phase 5 80–100% : gone — tiny bright point vanishes
 */
 @keyframes rex-suck-in {
-  0%   { transform: translateY(0px)   translateX(0px)  rotateZ(0deg)   scaleX(1)    scaleY(1);
-         filter: brightness(1)    blur(0px);   opacity: 1; }
+  0%   { transform: translateY(0px)   translateX(0px)   rotateZ(0deg)   scaleX(1)    scaleY(1);
+         filter: brightness(1)    blur(0px)    opacity(1); }
 
-  /* Resistance — heels dug in */
-  8%   { transform: translateY(-16px) translateX(4px)  rotateZ(5deg)   scaleX(1.04) scaleY(1.08);
-         filter: brightness(1)    blur(0px);   opacity: 1; }
+  8%   { transform: translateY(-16px) translateX(4px)   rotateZ(5deg)   scaleX(1.04) scaleY(1.08);
+         filter: brightness(1)    blur(0px)    opacity(1); }
 
-  /* Grip breaks — lurches forward + first shake */
   18%  { transform: translateY(6px)   translateX(-10px) rotateZ(-8deg)  scaleX(0.9)  scaleY(1.03);
-         filter: brightness(1.2)  blur(0px);   opacity: 1; }
+         filter: brightness(1.2)  blur(0px)    opacity(1); }
 
-  /* Turbulence right */
-  26%  { transform: translateY(16px)  translateX(9px)  rotateZ(-14deg) scaleX(0.78) scaleY(0.95);
-         filter: brightness(1.45) blur(0.5px); opacity: 1; }
+  26%  { transform: translateY(16px)  translateX(9px)   rotateZ(-14deg) scaleX(0.78) scaleY(0.95);
+         filter: brightness(1.45) blur(0.5px)  opacity(1); }
 
-  /* Turbulence left — body elongating */
-  36%  { transform: translateY(30px)  translateX(-7px) rotateZ(-9deg)  scaleX(0.6)  scaleY(0.8);
-         filter: brightness(1.8)  blur(1px);   opacity: 1; }
+  36%  { transform: translateY(30px)  translateX(-7px)  rotateZ(-9deg)  scaleX(0.6)  scaleY(0.8);
+         filter: brightness(1.8)  blur(1px)    opacity(1); }
 
-  /* Squished narrow, stretched tall */
-  48%  { transform: translateY(47px)  translateX(5px)  rotateZ(-17deg) scaleX(0.38) scaleY(0.6);
-         filter: brightness(2.4)  blur(2px);   opacity: 1; }
+  48%  { transform: translateY(47px)  translateX(5px)   rotateZ(-17deg) scaleX(0.38) scaleY(0.6);
+         filter: brightness(2.4)  blur(2px)    opacity(1); }
 
-  /* Rapid spin, nearly through */
-  63%  { transform: translateY(64px)  translateX(-3px) rotateZ(-28deg) scaleX(0.18) scaleY(0.35);
-         filter: brightness(4.5)  blur(5px);   opacity: 0.9; }
+  63%  { transform: translateY(64px)  translateX(-3px)  rotateZ(-28deg) scaleX(0.18) scaleY(0.35);
+         filter: brightness(4.5)  blur(5px)    opacity(0.9); }
 
-  /* Final streak */
-  80%  { transform: translateY(80px)  translateX(1px)  rotateZ(-40deg) scaleX(0.06) scaleY(0.14);
-         filter: brightness(9)    blur(10px);  opacity: 0.65; }
+  80%  { transform: translateY(80px)  translateX(1px)   rotateZ(-40deg) scaleX(0.06) scaleY(0.14);
+         filter: brightness(9)    blur(10px)   opacity(0.6); }
 
-  92%  { transform: translateY(93px)  translateX(0px)  rotateZ(-46deg) scaleX(0.02) scaleY(0.04);
-         filter: brightness(16)   blur(16px);  opacity: 0.3; }
+  92%  { transform: translateY(93px)  translateX(0px)   rotateZ(-46deg) scaleX(0.02) scaleY(0.04);
+         filter: brightness(16)   blur(16px)   opacity(0.2); }
 
-  100% { transform: translateY(100px) translateX(0px)  rotateZ(-50deg) scaleX(0.01) scaleY(0.01);
-         filter: brightness(22)   blur(22px);  opacity: 0; }
+  100% { transform: translateY(100px) translateX(0px)   rotateZ(-50deg) scaleX(0.01) scaleY(0.01);
+         filter: brightness(22)   blur(22px)   opacity(0); }
 }
 
-/* Screen flash when the suck panel is shown */
-.comic-panel.theme-suck::before {
+/* Suck panel bg image — zooms in like being pulled through a portal */
+.theme-suck .panel-bg-img {
+  background-position: center 40%;
+  background-size: cover;
+  animation: portal-zoom 3.5s ease-in forwards;
+}
+@keyframes portal-zoom {
+  0%   { transform: scale(1);   filter: brightness(1.0) saturate(1.2); }
+  55%  { transform: scale(1.6); filter: brightness(1.4) saturate(1.3); }
+  100% { transform: scale(3.0); filter: brightness(3.0) saturate(0.4) blur(6px); }
+}
+
+/* Portal vortex overlay — dark edges, glowing blue hole at centre */
+.theme-suck .panel-color-overlay {
+  background: radial-gradient(
+    circle at 50% 44%,
+    rgba(0, 220, 255, 0.10)  0%,
+    rgba(0, 120, 255, 0.28) 18%,
+    rgba(5,  10,  120, 0.55) 38%,
+    rgba(0,   0,   30, 0.82) 62%,
+    rgba(0,   0,    0, 0.94) 100%
+  );
+  animation: portal-pulse 1.3s ease-in-out infinite alternate;
+}
+@keyframes portal-pulse {
+  from { opacity: 0.72; }
+  to   { opacity: 1.00; }
+}
+
+/* Glowing ring at the portal mouth */
+.comic-panel.theme-suck .panel-image-section::after {
   content: '';
   position: absolute;
-  inset: 0;
-  z-index: 10;
+  top: 34%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 140px;
+  height: 90px;
+  border-radius: 50%;
+  border: 3px solid rgba(0, 220, 255, 0.9);
+  box-shadow:
+    0 0 18px rgba(0, 220, 255, 0.8),
+    0 0 45px rgba(0, 150, 255, 0.5),
+    inset 0 0 20px rgba(255, 255, 255, 0.25);
+  z-index: 5;
   pointer-events: none;
-  background: radial-gradient(ellipse at 50% 90%, rgba(255,255,255,0.7) 0%, transparent 60%);
-  animation: vortex-flash 2.8s ease-in forwards;
+  animation: ring-pulse 1.3s ease-in-out infinite alternate;
 }
-@keyframes vortex-flash {
-  0%   { opacity: 0; }
-  40%  { opacity: 0.2; }
-  100% { opacity: 0.95; }
+@keyframes ring-pulse {
+  from { box-shadow: 0 0 12px rgba(0,220,255,0.6), 0 0 30px rgba(0,150,255,0.35); }
+  to   { box-shadow: 0 0 28px rgba(0,220,255,1.0), 0 0 70px rgba(0,150,255,0.7), inset 0 0 25px rgba(255,255,255,0.35); }
+}
+
+/* Panel image section — hidden so zoom stays inside panel */
+.comic-panel.theme-suck .panel-image-section {
+  overflow: hidden;
+}
+
+/* Screen flash removed — clean panel */
+.comic-panel.theme-suck::before {
+  display: none;
 }

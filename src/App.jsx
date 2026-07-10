@@ -2,6 +2,7 @@
 import Cutscene from './components/Cutscene'
 import MissionCutscene from './components/MissionCutscene'
 import Game from './components/Game'
+import WarehouseLevel from './components/WarehouseLevel'
 import './App.css'
 
 function App() {
@@ -19,7 +20,10 @@ function App() {
         />
       )}
       {scene === 'mission-cutscene' && (
-        <MissionCutscene onComplete={() => setScene('game')} />
+        <MissionCutscene onComplete={() => setScene('warehouse')} />
+      )}
+      {scene === 'warehouse' && (
+        <WarehouseLevel onExit={() => setScene('cutscene')} />
       )}
     </div>
   )

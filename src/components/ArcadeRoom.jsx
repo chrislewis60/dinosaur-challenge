@@ -182,7 +182,7 @@ function drawCenterMonitor(canvas, sitting, missionReady) {
     ctx.fillText('GET EVERY HIGH SCORE BACK', W / 2, 372)
     ctx.font = '13px "Share Tech Mono", monospace'
     ctx.fillStyle = 'rgba(120, 200, 255, 0.3)'
-    ctx.fillText('RIGHT-CLICK TO START MISSION', W / 2, 440)
+    ctx.fillText('CLICK TO START MISSION', W / 2, 440)
     ctx.textAlign = 'left'
   }
 }

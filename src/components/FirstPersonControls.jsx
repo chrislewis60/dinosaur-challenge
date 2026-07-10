@@ -3,7 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { PointerLockControls } from '@react-three/drei'
 import * as THREE from 'three'
 
-export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onSitting, chairBodyRef }) {
+export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onSitting, chairBodyRef, roomBounds = 4.5, furnitureCollision = true }) {
   const { camera } = useThree()
   const controlsRef = useRef()
 
@@ -20,6 +20,11 @@ export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onS
   const targetHeight   = useRef(STAND_HEIGHT)
   const nearChair      = useRef(false)
   const sittingFrames  = useRef(0)
+  const jumpVelocity   = useRef(0)
+  const isJumping      = useRef(false)
+
+  const GRAVITY    = -18
+  const JUMP_FORCE =  7
 
   const _chairPos      = new THREE.Vector3()
   const _monitorCenter = new THREE.Vector3()
@@ -43,6 +48,13 @@ export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onS
           if (onSitting) onSitting(isSitting.current)
         }
       }
+      if (e.code === 'Space') {
+        e.preventDefault()
+        if (!isSitting.current && !isJumping.current) {
+          jumpVelocity.current = JUMP_FORCE
+          isJumping.current    = true
+        }
+      }
     }
     const handleKeyUp = (e) => {
       const key = e.key.toLowerCase()
@@ -63,9 +75,20 @@ export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onS
   useFrame((state, delta) => {
     if (!controlsRef.current?.isLocked) return
 
-    // Height lerp — only when standing (sitting position is driven by chair)
-    if (!isSitting.current) {
+    // Height lerp — only when standing and not mid-jump
+    if (!isSitting.current && !isJumping.current) {
       camera.position.y += (targetHeight.current - camera.position.y) * 0.12
+    }
+
+    // Jump physics
+    if (isJumping.current) {
+      jumpVelocity.current  += GRAVITY * delta
+      camera.position.y     += jumpVelocity.current * delta
+      if (camera.position.y <= STAND_HEIGHT) {
+        camera.position.y    = STAND_HEIGHT
+        jumpVelocity.current = 0
+        isJumping.current    = false
+      }
     }
 
     // Proximity check — read actual rigid body position if available
@@ -128,8 +151,8 @@ export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onS
     smoothVelocity.current.lerp(velocity.current, lerpFactor)
     camera.position.addScaledVector(smoothVelocity.current, delta)
 
-    camera.position.x = Math.max(-4.5, Math.min(4.5, camera.position.x))
-    camera.position.z = Math.max(-4.5, Math.min(4.5, camera.position.z))
+    camera.position.x = Math.max(-roomBounds, Math.min(roomBounds, camera.position.x))
+    camera.position.z = Math.max(-roomBounds, Math.min(roomBounds, camera.position.z))
 
     // AABB collision resolution
     const resolveBox = (px, pz, cx, cz, hw, hd) => {
@@ -144,16 +167,18 @@ export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onS
       return null
     }
 
-    // Desk collision
-    resolveBox(camera.position.x, camera.position.z, 0, -3.8, 1.25, 0.45)
+    if (furnitureCollision) {
+      // Desk collision
+      resolveBox(camera.position.x, camera.position.z, 0, -3.8, 1.25, 0.45)
 
-    // Chair collision — gentle push via physics impulse
-    const chairHit = resolveBox(camera.position.x, camera.position.z, chairCX, chairCZ, 0.38, 0.38)
-    if (chairHit && chairBodyRef?.current) {
-      chairBodyRef.current.applyImpulse(
-        { x: -chairHit.x * 1.2, y: 0, z: -chairHit.z * 1.2 },
-        true
-      )
+      // Chair collision — gentle push via physics impulse
+      const chairHit = resolveBox(camera.position.x, camera.position.z, chairCX, chairCZ, 0.38, 0.38)
+      if (chairHit && chairBodyRef?.current) {
+        chairBodyRef.current.applyImpulse(
+          { x: -chairHit.x * 1.2, y: 0, z: -chairHit.z * 1.2 },
+          true
+        )
+      }
     }
   })
 

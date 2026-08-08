@@ -91,6 +91,10 @@ export default function PlayerBody() {
   const leftHand   = useRef()
   const rightHand  = useRef()
   const tailRef    = useRef()
+  const tailSeg2   = useRef()
+  const tailSeg3   = useRef()
+  const tailSeg4   = useRef()
+  const tailSeg5   = useRef()
   const _dir      = new THREE.Vector3()
   const _prevPos  = new THREE.Vector3()
   const walkClock = useRef(0)
@@ -140,12 +144,37 @@ export default function PlayerBody() {
       rightElbow.current.rotation.x += (rightTarget - rightElbow.current.rotation.x) * 0.14
     }
 
-    // Tail swish — side to side, faster when walking
+    // Tail animation — swish side to side and bob up/down with wave through segments
     const swishTarget = moving
       ? Math.sin(walkClock.current * 0.65) * 0.35
       : Math.sin(walkClock.current * 0.4) * 0.18
+    const bobTarget = moving
+      ? Math.sin(walkClock.current * 0.8) * 0.10
+      : Math.sin(walkClock.current * 0.5) * 0.05
     if (tailRef.current) {
+      // Side-to-side swish (y-axis)
       tailRef.current.rotation.y += (swishTarget - tailRef.current.rotation.y) * 0.1
+      // Up-down bob (x-axis) — subtle vertical motion
+      tailRef.current.rotation.x += (bobTarget - tailRef.current.rotation.x) * 0.08
+    }
+    
+    // Wave motion through tail segments — each follows with phase delay
+    const waveSpeed = moving ? 0.7 : 0.4
+    if (tailSeg2.current) {
+      const target = 0.22 + Math.sin(walkClock.current * waveSpeed + 0.4) * 0.12
+      tailSeg2.current.rotation.x += (target - tailSeg2.current.rotation.x) * 0.12
+    }
+    if (tailSeg3.current) {
+      const target = 0.22 + Math.sin(walkClock.current * waveSpeed + 0.8) * 0.14
+      tailSeg3.current.rotation.x += (target - tailSeg3.current.rotation.x) * 0.12
+    }
+    if (tailSeg4.current) {
+      const target = 0.22 + Math.sin(walkClock.current * waveSpeed + 1.2) * 0.16
+      tailSeg4.current.rotation.x += (target - tailSeg4.current.rotation.x) * 0.12
+    }
+    if (tailSeg5.current) {
+      const target = 0.20 + Math.sin(walkClock.current * waveSpeed + 1.6) * 0.18
+      tailSeg5.current.rotation.x += (target - tailSeg5.current.rotation.x) * 0.12
     }
     const handSwing = moving
       ? Math.sin(walkClock.current * 0.7 + Math.PI / 2) * 0.3
@@ -245,25 +274,25 @@ export default function PlayerBody() {
           <meshStandardMaterial map={scalesSm} color="#4a9830" roughness={0.82} />
         </mesh>
         {/* Seg 2 — curves up (+x = upward in this rotated space) */}
-        <group position={[0, -0.21, 0]} rotation={[0.22, 0, 0]}>
+        <group ref={tailSeg2} position={[0, -0.21, 0]} rotation={[0.22, 0, 0]}>
           <mesh position={[0, -0.10, 0]} castShadow>
             <cylinderGeometry args={[0.044, 0.035, 0.20, 12]} />
             <meshStandardMaterial map={scalesSm} color="#4a9830" roughness={0.82} />
           </mesh>
           {/* Seg 3 */}
-          <group position={[0, -0.21, 0]} rotation={[0.22, 0, 0]}>
+          <group ref={tailSeg3} position={[0, -0.21, 0]} rotation={[0.22, 0, 0]}>
             <mesh position={[0, -0.10, 0]} castShadow>
               <cylinderGeometry args={[0.032, 0.024, 0.20, 12]} />
               <meshStandardMaterial map={scalesSm} color="#4a9830" roughness={0.82} />
             </mesh>
             {/* Seg 4 */}
-            <group position={[0, -0.21, 0]} rotation={[0.22, 0, 0]}>
+            <group ref={tailSeg4} position={[0, -0.21, 0]} rotation={[0.22, 0, 0]}>
               <mesh position={[0, -0.09, 0]} castShadow>
                 <cylinderGeometry args={[0.020, 0.013, 0.18, 12]} />
                 <meshStandardMaterial color="#3a8025" roughness={0.85} />
               </mesh>
               {/* Seg 5 — slim taper */}
-              <group position={[0, -0.19, 0]} rotation={[0.20, 0, 0]}>
+              <group ref={tailSeg5} position={[0, -0.19, 0]} rotation={[0.20, 0, 0]}>
                 <mesh position={[0, -0.08, 0]} castShadow>
                   <cylinderGeometry args={[0.010, 0.004, 0.16, 10]} />
                   <meshStandardMaterial color="#2e6a1e" roughness={0.85} />

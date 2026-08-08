@@ -303,6 +303,11 @@ function Guard({ waypoints, speed = 1.9, walkFreq = 3.6, phaseOffset = 0, player
   const hipsRef     = useRef()
   const torsoRef    = useRef()
   const headRef     = useRef()
+  const tailRef     = useRef()
+  const tailSeg2    = useRef()
+  const tailSeg3    = useRef()
+  const tailSeg4    = useRef()
+  const tailSeg5    = useRef()
   const leftArmRef  = useRef()
   const rightArmRef = useRef()
   const leftLegRef  = useRef()
@@ -409,192 +414,334 @@ function Guard({ waypoints, speed = 1.9, walkFreq = 3.6, phaseOffset = 0, player
     // Head glances sideways while walking
     if (headRef.current) headRef.current.rotation.y = Math.sin(t * 0.55) * 0.28
 
+    // Tail animation — wave motion through segments for flowing movement
+    if (tailRef.current) {
+      // Base tail swish (y-axis rotation)
+      const baseSwish = Math.sin(wt * 0.5 + Math.PI) * 0.45
+      tailRef.current.rotation.y = baseSwish
+      // Base tilt with bob (x-axis rotation)
+      tailRef.current.rotation.x = Math.PI / 2.2 + Math.sin(wt * 0.65) * 0.12
+      // Slight twist (z-axis)
+      tailRef.current.rotation.z = Math.sin(wt * 0.35) * 0.08
+    }
+    
+    // Each segment follows the previous with a phase delay, creating a wave
+    if (tailSeg2.current) {
+      tailSeg2.current.rotation.x = 0.25 + Math.sin(wt * 0.6 + 0.5) * 0.15
+      tailSeg2.current.rotation.y = Math.sin(wt * 0.5 + 0.3) * 0.12
+    }
+    if (tailSeg3.current) {
+      tailSeg3.current.rotation.x = 0.25 + Math.sin(wt * 0.6 + 1.0) * 0.18
+      tailSeg3.current.rotation.y = Math.sin(wt * 0.5 + 0.6) * 0.15
+    }
+    if (tailSeg4.current) {
+      tailSeg4.current.rotation.x = 0.25 + Math.sin(wt * 0.6 + 1.5) * 0.20
+      tailSeg4.current.rotation.y = Math.sin(wt * 0.5 + 0.9) * 0.18
+    }
+    if (tailSeg5.current) {
+      tailSeg5.current.rotation.x = 0.22 + Math.sin(wt * 0.6 + 2.0) * 0.22
+      tailSeg5.current.rotation.y = Math.sin(wt * 0.5 + 1.2) * 0.20
+    }
+
     pos.y = Math.abs(sw) * 0.018
   })
 
-  const C = { navy: '#0d0d2a', dark: '#080820', armor: '#0a0a18', red: '#cc0000', metal: '#2a2a2a' }
+  const C = { 
+    body: '#3d5c2e',      // Dark green dinosaur body
+    scales: '#2a4020',    // Darker green for scales
+    belly: '#6b8f5a',     // Lighter belly
+    red: '#ff3300',       // Bright red eyes
+    teeth: '#e8e8e8',     // White teeth
+    claws: '#1a1a1a'      // Dark claws
+  }
 
   return (
     <group ref={groupRef} position={[waypoints[0].x, 0, waypoints[0].z]}>
 
       {/* ── Hips / legs ── */}
       <group ref={hipsRef}>
-        {/* Belt */}
-        <mesh position={[0, 0.88, 0]}>
-          <boxGeometry args={[0.40, 0.09, 0.26]} />
-          <meshStandardMaterial color={C.metal} metalness={0.55} roughness={0.4} />
-        </mesh>
-        {[-0.12, 0.10].map((bx, bi) => (
-          <mesh key={bi} position={[bx, 0.86, 0.12]}>
-            <boxGeometry args={[0.07, 0.10, 0.055]} />
-            <meshStandardMaterial color="#222" roughness={0.8} />
+        {/* ── Tail — multi-segment, curves backward and up like player ── */}
+        <group ref={tailRef} position={[0, 0.82, -0.08]} rotation={[Math.PI / 2.2, 0, 0]}>
+          {/* Seg 1 — widest, base */}
+          <mesh position={[0, -0.12, 0]} castShadow>
+            <cylinderGeometry args={[0.08, 0.07, 0.24, 10]} />
+            <meshStandardMaterial color={C.body} roughness={0.85} />
           </mesh>
-        ))}
+          {/* Spine ridge on seg 1 */}
+          <mesh position={[0, -0.12, 0.04]} rotation={[0, 0, 0]}>
+            <coneGeometry args={[0.04, 0.10, 5]} />
+            <meshStandardMaterial color={C.scales} roughness={0.8} />
+          </mesh>
+          
+          {/* Seg 2 — curves up */}
+          <group ref={tailSeg2} position={[0, -0.25, 0]} rotation={[0.25, 0, 0]}>
+            <mesh position={[0, -0.12, 0]} castShadow>
+              <cylinderGeometry args={[0.065, 0.055, 0.24, 10]} />
+              <meshStandardMaterial color={C.body} roughness={0.85} />
+            </mesh>
+            <mesh position={[0, -0.12, 0.035]} rotation={[0, 0, 0]}>
+              <coneGeometry args={[0.035, 0.09, 5]} />
+              <meshStandardMaterial color={C.scales} roughness={0.8} />
+            </mesh>
+            
+            {/* Seg 3 */}
+            <group ref={tailSeg3} position={[0, -0.25, 0]} rotation={[0.25, 0, 0]}>
+              <mesh position={[0, -0.11, 0]} castShadow>
+                <cylinderGeometry args={[0.050, 0.040, 0.22, 10]} />
+                <meshStandardMaterial color={C.body} roughness={0.85} />
+              </mesh>
+              <mesh position={[0, -0.11, 0.03]} rotation={[0, 0, 0]}>
+                <coneGeometry args={[0.03, 0.08, 5]} />
+                <meshStandardMaterial color={C.scales} roughness={0.8} />
+              </mesh>
+              
+              {/* Seg 4 */}
+              <group ref={tailSeg4} position={[0, -0.23, 0]} rotation={[0.25, 0, 0]}>
+                <mesh position={[0, -0.10, 0]} castShadow>
+                  <cylinderGeometry args={[0.035, 0.025, 0.20, 10]} />
+                  <meshStandardMaterial color={C.body} roughness={0.85} />
+                </mesh>
+                <mesh position={[0, -0.10, 0.02]} rotation={[0, 0, 0]}>
+                  <coneGeometry args={[0.025, 0.07, 5]} />
+                  <meshStandardMaterial color={C.scales} roughness={0.8} />
+                </mesh>
+                
+                {/* Seg 5 — slim taper */}
+                <group ref={tailSeg5} position={[0, -0.21, 0]} rotation={[0.22, 0, 0]}>
+                  <mesh position={[0, -0.09, 0]} castShadow>
+                    <cylinderGeometry args={[0.020, 0.012, 0.18, 8]} />
+                    <meshStandardMaterial color={C.scales} roughness={0.85} />
+                  </mesh>
+                  {/* Sharp point */}
+                  <mesh position={[0, -0.22, 0]} rotation={[Math.PI, 0, 0]} castShadow>
+                    <coneGeometry args={[0.012, 0.12, 8]} />
+                    <meshStandardMaterial color={C.scales} roughness={0.7} />
+                  </mesh>
+                </group>
+              </group>
+            </group>
+          </group>
+        </group>
 
-        {/* Left leg */}
+        {/* Hip scales/armor */}
+        <mesh position={[0, 0.88, 0]}>
+          <boxGeometry args={[0.45, 0.12, 0.30]} />
+          <meshStandardMaterial color={C.scales} roughness={0.85} />
+        </mesh>
+
+        {/* Left leg - Dinosaur style */}
         <group ref={leftLegRef} position={[-0.115, 0.80, 0]}>
-          {/* Thigh */}
+          {/* Thigh - muscular */}
           <mesh position={[0, -0.17, 0]} castShadow>
-            <cylinderGeometry args={[0.08, 0.072, 0.40, 10]} />
-            <meshStandardMaterial color={C.dark} roughness={0.75} />
+            <cylinderGeometry args={[0.10, 0.085, 0.40, 8]} />
+            <meshStandardMaterial color={C.body} roughness={0.85} />
           </mesh>
-          {/* Knee pivot — shin + boot rotate from here */}
+          {/* Knee pivot — shin + foot rotate from here */}
           <group ref={leftKneeRef} position={[0, -0.38, 0]}>
+            {/* Knee joint scales */}
             <mesh position={[0, 0, 0.058]}>
-              <boxGeometry args={[0.13, 0.10, 0.055]} />
-              <meshStandardMaterial color={C.armor} metalness={0.38} roughness={0.55} />
+              <boxGeometry args={[0.14, 0.11, 0.08]} />
+              <meshStandardMaterial color={C.scales} roughness={0.8} />
             </mesh>
+            {/* Shin - reptilian */}
             <mesh position={[0, -0.19, 0]} castShadow>
-              <cylinderGeometry args={[0.07, 0.062, 0.34, 10]} />
-              <meshStandardMaterial color={C.dark} roughness={0.75} />
+              <cylinderGeometry args={[0.08, 0.07, 0.34, 8]} />
+              <meshStandardMaterial color={C.body} roughness={0.85} />
             </mesh>
-            <mesh position={[0, -0.39, 0.04]} castShadow>
-              <boxGeometry args={[0.17, 0.11, 0.24]} />
-              <meshStandardMaterial color="#111" roughness={0.9} />
+            {/* Dinosaur foot with three claws */}
+            <mesh position={[0, -0.39, 0.06]} castShadow>
+              <boxGeometry args={[0.14, 0.08, 0.18]} />
+              <meshStandardMaterial color={C.scales} roughness={0.9} />
+            </mesh>
+            {/* Three front claws */}
+            {[-0.05, 0, 0.05].map((cx, ci) => (
+              <mesh key={ci} position={[cx, -0.43, 0.16]} rotation={[0.3, 0, 0]}>
+                <coneGeometry args={[0.02, 0.12, 4]} />
+                <meshStandardMaterial color={C.claws} roughness={0.7} />
+              </mesh>
+            ))}
+            {/* Back claw */}
+            <mesh position={[0, -0.42, -0.08]} rotation={[-0.5, 0, 0]}>
+              <coneGeometry args={[0.025, 0.10, 4]} />
+              <meshStandardMaterial color={C.claws} roughness={0.7} />
             </mesh>
           </group>
         </group>
 
-        {/* Right leg */}
+        {/* Right leg - Dinosaur style */}
         <group ref={rightLegRef} position={[0.115, 0.80, 0]}>
+          {/* Thigh */}
           <mesh position={[0, -0.17, 0]} castShadow>
-            <cylinderGeometry args={[0.08, 0.072, 0.40, 10]} />
-            <meshStandardMaterial color={C.dark} roughness={0.75} />
+            <cylinderGeometry args={[0.10, 0.085, 0.40, 8]} />
+            <meshStandardMaterial color={C.body} roughness={0.85} />
           </mesh>
           <group ref={rightKneeRef} position={[0, -0.38, 0]}>
             <mesh position={[0, 0, 0.058]}>
-              <boxGeometry args={[0.13, 0.10, 0.055]} />
-              <meshStandardMaterial color={C.armor} metalness={0.38} roughness={0.55} />
+              <boxGeometry args={[0.14, 0.11, 0.08]} />
+              <meshStandardMaterial color={C.scales} roughness={0.8} />
             </mesh>
             <mesh position={[0, -0.19, 0]} castShadow>
-              <cylinderGeometry args={[0.07, 0.062, 0.34, 10]} />
-              <meshStandardMaterial color={C.dark} roughness={0.75} />
+              <cylinderGeometry args={[0.08, 0.07, 0.34, 8]} />
+              <meshStandardMaterial color={C.body} roughness={0.85} />
             </mesh>
-            <mesh position={[0, -0.39, 0.04]} castShadow>
-              <boxGeometry args={[0.17, 0.11, 0.24]} />
-              <meshStandardMaterial color="#111" roughness={0.9} />
+            <mesh position={[0, -0.39, 0.06]} castShadow>
+              <boxGeometry args={[0.14, 0.08, 0.18]} />
+              <meshStandardMaterial color={C.scales} roughness={0.9} />
+            </mesh>
+            {[-0.05, 0, 0.05].map((cx, ci) => (
+              <mesh key={ci} position={[cx, -0.43, 0.16]} rotation={[0.3, 0, 0]}>
+                <coneGeometry args={[0.02, 0.12, 4]} />
+                <meshStandardMaterial color={C.claws} roughness={0.7} />
+              </mesh>
+            ))}
+            <mesh position={[0, -0.42, -0.08]} rotation={[-0.5, 0, 0]}>
+              <coneGeometry args={[0.025, 0.10, 4]} />
+              <meshStandardMaterial color={C.claws} roughness={0.7} />
             </mesh>
           </group>
         </group>
       </group>
 
-      {/* ── Torso / arms / head ── */}
-      <group ref={torsoRef} position={[0, 0.92, 0]}>
-        {/* Main torso */}
+      {/* ── Torso / tiny arms / dinosaur head ── */}
+      <group ref={torsoRef} position={[0, 0.92, 0]} rotation={[0.2, 0, 0]}>
+        {/* Main torso - tilted forward like T-Rex */}
         <mesh position={[0, 0.28, 0]} castShadow>
-          <boxGeometry args={[0.40, 0.50, 0.24]} />
-          <meshStandardMaterial color={C.navy} roughness={0.7} />
+          <boxGeometry args={[0.42, 0.55, 0.35]} />
+          <meshStandardMaterial color={C.body} roughness={0.85} />
         </mesh>
-        {/* Chest armour */}
-        <mesh position={[0, 0.33, 0.13]}>
-          <boxGeometry args={[0.30, 0.30, 0.045]} />
-          <meshStandardMaterial color={C.armor} metalness={0.35} roughness={0.55} />
+        {/* Belly scales - lighter color */}
+        <mesh position={[0, 0.20, 0.18]}>
+          <boxGeometry args={[0.35, 0.45, 0.02]} />
+          <meshStandardMaterial color={C.belly} roughness={0.9} />
         </mesh>
-        {/* OmniArc badge */}
-        <mesh position={[0.13, 0.40, 0.158]}>
-          <boxGeometry args={[0.09, 0.055, 0.012]} />
-          <meshStandardMaterial color={C.red} emissive={C.red} emissiveIntensity={1.1} />
-        </mesh>
-        {/* Shoulder pads */}
-        {[-0.27, 0.27].map((sx, si) => (
-          <mesh key={si} position={[sx, 0.50, 0]}>
-            <boxGeometry args={[0.14, 0.09, 0.26]} />
-            <meshStandardMaterial color={C.armor} metalness={0.38} roughness={0.5} />
+        {/* Back ridges */}
+        {[0.15, 0.28, 0.41].map((ry, ri) => (
+          <mesh key={ri} position={[0, ry, -0.15]} rotation={[0.3, 0, 0]}>
+            <coneGeometry args={[0.06, 0.12, 4]} />
+            <meshStandardMaterial color={C.scales} roughness={0.8} />
+          </mesh>
+        ))}
+        
+        {/* Shoulder joints */}
+        {[-0.24, 0.24].map((sx, si) => (
+          <mesh key={si} position={[sx, 0.45, 0.08]}>
+            <sphereGeometry args={[0.09, 8, 6]} />
+            <meshStandardMaterial color={C.scales} roughness={0.8} />
           </mesh>
         ))}
 
-        {/* Left arm */}
-        <group ref={leftArmRef} position={[-0.26, 0.44, 0]}>
-          <mesh position={[0, -0.13, 0]} castShadow>
-            <cylinderGeometry args={[0.065, 0.060, 0.33, 10]} />
-            <meshStandardMaterial color={C.navy} roughness={0.7} />
+        {/* Left arm - TINY T-Rex style */}
+        <group ref={leftArmRef} position={[-0.24, 0.38, 0.05]}>
+          <mesh position={[0, -0.08, 0]} castShadow>
+            <cylinderGeometry args={[0.04, 0.035, 0.18, 6]} />
+            <meshStandardMaterial color={C.body} roughness={0.85} />
           </mesh>
-          {/* Elbow */}
-          <mesh position={[0, -0.32, 0]}>
-            <sphereGeometry args={[0.065, 8, 6]} />
-            <meshStandardMaterial color={C.armor} roughness={0.5} />
+          {/* Tiny hand with two claws */}
+          <mesh position={[0, -0.18, 0]} castShadow>
+            <boxGeometry args={[0.06, 0.05, 0.04]} />
+            <meshStandardMaterial color={C.scales} roughness={0.9} />
           </mesh>
-          <mesh position={[0, -0.48, 0]} castShadow>
-            <cylinderGeometry args={[0.055, 0.050, 0.30, 10]} />
-            <meshStandardMaterial color={C.navy} roughness={0.7} />
+          <mesh position={[-0.02, -0.20, 0.02]} rotation={[0.4, 0.2, 0]}>
+            <coneGeometry args={[0.012, 0.05, 4]} />
+            <meshStandardMaterial color={C.claws} roughness={0.7} />
           </mesh>
-          {/* Glove */}
-          <mesh position={[0, -0.66, 0]} castShadow>
-            <boxGeometry args={[0.10, 0.10, 0.08]} />
-            <meshStandardMaterial color="#162016" roughness={0.8} />
-          </mesh>
-        </group>
-
-        {/* Right arm + baton */}
-        <group ref={rightArmRef} position={[0.26, 0.44, 0]}>
-          <mesh position={[0, -0.13, 0]} castShadow>
-            <cylinderGeometry args={[0.065, 0.060, 0.33, 10]} />
-            <meshStandardMaterial color={C.navy} roughness={0.7} />
-          </mesh>
-          <mesh position={[0, -0.32, 0]}>
-            <sphereGeometry args={[0.065, 8, 6]} />
-            <meshStandardMaterial color={C.armor} roughness={0.5} />
-          </mesh>
-          <mesh position={[0, -0.48, 0]} castShadow>
-            <cylinderGeometry args={[0.055, 0.050, 0.30, 10]} />
-            <meshStandardMaterial color={C.navy} roughness={0.7} />
-          </mesh>
-          <mesh position={[0, -0.66, 0]} castShadow>
-            <boxGeometry args={[0.10, 0.10, 0.08]} />
-            <meshStandardMaterial color="#162016" roughness={0.8} />
-          </mesh>
-          {/* Baton */}
-          <mesh position={[0.06, -0.82, 0.09]} rotation={[0.28, 0, 0.16]} castShadow>
-            <cylinderGeometry args={[0.022, 0.022, 0.50, 7]} />
-            <meshStandardMaterial color="#1a1a1a" metalness={0.62} roughness={0.4} />
-          </mesh>
-          {/* Red grip band */}
-          <mesh position={[0.06, -0.94, 0.13]} rotation={[0.28, 0, 0.16]}>
-            <cylinderGeometry args={[0.027, 0.027, 0.10, 7]} />
-            <meshStandardMaterial color={C.red} emissive={C.red} emissiveIntensity={0.5} />
+          <mesh position={[0.02, -0.20, 0.02]} rotation={[0.4, -0.2, 0]}>
+            <coneGeometry args={[0.012, 0.05, 4]} />
+            <meshStandardMaterial color={C.claws} roughness={0.7} />
           </mesh>
         </group>
 
-        {/* Neck */}
-        <mesh position={[0, 0.58, 0]}>
-          <cylinderGeometry args={[0.076, 0.086, 0.13, 10]} />
-          <meshStandardMaterial color={C.navy} roughness={0.6} />
+        {/* Right arm - TINY T-Rex style */}
+        <group ref={rightArmRef} position={[0.24, 0.38, 0.05]}>
+          <mesh position={[0, -0.08, 0]} castShadow>
+            <cylinderGeometry args={[0.04, 0.035, 0.18, 6]} />
+            <meshStandardMaterial color={C.body} roughness={0.85} />
+          </mesh>
+          <mesh position={[0, -0.18, 0]} castShadow>
+            <boxGeometry args={[0.06, 0.05, 0.04]} />
+            <meshStandardMaterial color={C.scales} roughness={0.9} />
+          </mesh>
+          <mesh position={[-0.02, -0.20, 0.02]} rotation={[0.4, 0.2, 0]}>
+            <coneGeometry args={[0.012, 0.05, 4]} />
+            <meshStandardMaterial color={C.claws} roughness={0.7} />
+          </mesh>
+          <mesh position={[0.02, -0.20, 0.02]} rotation={[0.4, -0.2, 0]}>
+            <coneGeometry args={[0.012, 0.05, 4]} />
+            <meshStandardMaterial color={C.claws} roughness={0.7} />
+          </mesh>
+        </group>
+
+        {/* Neck - muscular */}
+        <mesh position={[0, 0.56, 0.10]} rotation={[-0.3, 0, 0]}>
+          <cylinderGeometry args={[0.10, 0.12, 0.16, 8]} />
+          <meshStandardMaterial color={C.body} roughness={0.8} />
         </mesh>
 
-        {/* Head group — turns independently */}
-        <group ref={headRef} position={[0, 0.72, 0]}>
-          {/* Skull */}
-          <mesh castShadow>
-            <boxGeometry args={[0.27, 0.28, 0.27]} />
-            <meshStandardMaterial color={C.armor} roughness={0.5} metalness={0.26} />
+        {/* Head group — turns independently (dinosaur head) */}
+        <group ref={headRef} position={[0, 0.68, 0.18]}>
+          {/* Main skull - elongated */}
+          <mesh position={[0, 0.06, 0.16]} castShadow>
+            <boxGeometry args={[0.22, 0.24, 0.40]} />
+            <meshStandardMaterial color={C.body} roughness={0.8} />
           </mesh>
-          {/* Visor — ref for detection flash */}
-          <mesh position={[0, 0.02, 0.148]}>
-            <boxGeometry args={[0.23, 0.09, 0.025]} />
-            <meshStandardMaterial ref={visorRef} color={C.red} emissive={C.red} emissiveIntensity={1.7} transparent opacity={0.88} />
+          {/* Snout */}
+          <mesh position={[0, 0.02, 0.42]} castShadow>
+            <boxGeometry args={[0.18, 0.18, 0.20]} />
+            <meshStandardMaterial color={C.body} roughness={0.85} />
           </mesh>
-          {/* Visor inner glow plane */}
-          <mesh position={[0, 0.02, 0.12]}>
-            <planeGeometry args={[0.20, 0.07]} />
-            <meshStandardMaterial color={C.red} emissive={C.red} emissiveIntensity={0.6} transparent opacity={0.4} />
+          {/* Nostrils */}
+          {[-0.05, 0.05].map((nx, ni) => (
+            <mesh key={ni} position={[nx, 0.06, 0.52]}>
+              <sphereGeometry args={[0.025, 6, 5]} />
+              <meshStandardMaterial color="#000" roughness={0.9} />
+            </mesh>
+          ))}
+          
+          {/* Upper jaw teeth */}
+          {[-0.07, -0.03, 0.01, 0.05].map((tx, ti) => (
+            <mesh key={ti} position={[tx, -0.04, 0.44 + ti * 0.02]} rotation={[0.3, 0, 0]}>
+              <coneGeometry args={[0.015, 0.06, 4]} />
+              <meshStandardMaterial color={C.teeth} roughness={0.4} />
+            </mesh>
+          ))}
+          
+          {/* Lower jaw - slight dark shade */}
+          <mesh position={[0, -0.08, 0.34]}>
+            <boxGeometry args={[0.16, 0.08, 0.32]} />
+            <meshStandardMaterial color={C.scales} roughness={0.85} />
           </mesh>
-          {/* Helmet ridge */}
-          <mesh position={[0, 0.155, 0]}>
-            <boxGeometry args={[0.08, 0.06, 0.27]} />
-            <meshStandardMaterial color={C.metal} metalness={0.52} roughness={0.4} />
+          {/* Lower jaw teeth */}
+          {[-0.06, -0.02, 0.02, 0.06].map((tx, ti) => (
+            <mesh key={`lower${ti}`} position={[tx, -0.09, 0.36 + ti * 0.02]} rotation={[-0.3, 0, 0]}>
+              <coneGeometry args={[0.012, 0.05, 4]} />
+              <meshStandardMaterial color={C.teeth} roughness={0.4} />
+            </mesh>
+          ))}
+
+          {/* Eyes — RED GLOWING (for detection) — ref for detection flash */}
+          {[-0.09, 0.09].map((ex, ei) => (
+            <mesh key={ei} position={[ex, 0.10, 0.32]}>
+              <sphereGeometry args={[0.04, 8, 6]} />
+              <meshStandardMaterial 
+                ref={ei === 0 ? visorRef : null}
+                color={C.red} 
+                emissive={C.red} 
+                emissiveIntensity={2.0} 
+              />
+            </mesh>
+          ))}
+          
+          {/* Head ridge/crest */}
+          <mesh position={[0, 0.18, 0.08]} rotation={[-0.2, 0, 0]}>
+            <boxGeometry args={[0.18, 0.08, 0.25]} />
+            <meshStandardMaterial color={C.scales} roughness={0.75} />
           </mesh>
-          {/* Ear comms */}
-          {[-0.145, 0.145].map((ex, ei) => (
-            <group key={ei} position={[ex, 0, 0]}>
-              <mesh>
-                <boxGeometry args={[0.038, 0.11, 0.09]} />
-                <meshStandardMaterial color={C.metal} metalness={0.52} roughness={0.4} />
-              </mesh>
-              <mesh position={[ex > 0 ? 0.025 : -0.025, 0.04, 0]}>
-                <sphereGeometry args={[0.018, 6, 5]} />
-                <meshStandardMaterial color={C.red} emissive={C.red} emissiveIntensity={0.8} />
-              </mesh>
-            </group>
+          {/* Small horns above eyes */}
+          {[-0.08, 0.08].map((hx, hi) => (
+            <mesh key={hi} position={[hx, 0.20, 0.20]} rotation={[-0.5, 0, hx > 0 ? -0.3 : 0.3]}>
+              <coneGeometry args={[0.03, 0.10, 4]} />
+              <meshStandardMaterial color={C.scales} roughness={0.8} />
+            </mesh>
           ))}
         </group>
       </group>

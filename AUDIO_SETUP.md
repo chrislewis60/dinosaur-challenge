@@ -1,6 +1,6 @@
 # Audio Setup Guide
 
-Your game now has a complete audio system with volume controls! This guide will help you add the music and sound effect files.
+Your game now has immersive sound effects integrated throughout! This guide will help you add the music and sound effect files.
 
 ## 🎵 Music Files Required
 
@@ -25,27 +25,18 @@ Add these files to `public/sounds/`:
 - **interact.mp3** - General interaction feedback (optional)
 
 ### Character Actions
+- **footstep.mp3** - Walking sound (plays every 0.45s while moving)
 - **sit.mp3** - Sitting down sound (chair creak/cushion)
 - **stand.mp3** - Standing up sound (subtle chair noise)
-- **footstep.mp3** - Walking sound (optional for future use)
 - **jump.mp3** - Jump sound (optional for future use)
 
 ### Mission Sounds
 - **mission-start.mp3** - Mission activation sound (digital/tech startup)
-- **door-lock.mp3** - Lock picking sound (clicking, scraping, mechanical)
+- **door-lock.mp3** - Lock picking sound (clicking, scraping - plays continuously while holding F)
 - **door-open.mp3** - Door unlocking/opening (latch click, creak)
 - **alarm.mp3** - Guard detection alarm (urgent beeping/siren)
 - **hack.mp3** - Terminal hacking sound (rapid keyboard typing, beeps)
 - **success.mp3** - Mission complete sound (triumphant chime/fanfare)
-
-## 🎛️ Volume Controls
-
-A volume control panel is now available in the top-right corner:
-- **Master Volume** - Overall game audio level
-- **Music** - Background music volume (affects all music tracks)
-- **Sound FX** - Sound effects volume (affects all game sounds)
-
-Volume settings are saved automatically to localStorage.
 
 ## 📦 Where to Find Audio Files
 
@@ -84,9 +75,10 @@ The game will work without audio files! Missing files will:
 
 ### Current Sound Triggers
 - ✅ Button clicks (start game, skip cutscenes, exit)
+- ✅ **Footsteps** - Plays automatically every 0.45s while moving (WASD)
 - ✅ Sitting/standing at arcade machine
 - ✅ Mission start (clicking arcade screen when ready)
-- ✅ Lock picking (continuous while holding F)
+- ✅ **Lock picking** - Continuous sound loop while holding F at the door
 - ✅ Door opening (when lock is fully picked)
 - ✅ Guard detection alarm
 - ✅ Terminal hacking (F key at server)
@@ -115,11 +107,12 @@ The game will work without audio files! Missing files will:
 5. Start your dev server and test!
 
 ## 🎮 Usage
-
-The audio system is fully integrated:
-- Volume controls appear in top-right corner (🔊 button)
-- All sounds respect master volume and individual channel volumes
-- Settings persist across sessions
+ and automatic:
+- Footsteps play while moving
+- Lock picking sounds loop while holding F
+- All UI interactions have click sounds
+- Music changes with each scene
+- No configuration needssions
 - No additional setup required - just add the files!
 
 Enjoy your enhanced gaming experience! 🦖🎵

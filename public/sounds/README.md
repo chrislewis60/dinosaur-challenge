@@ -7,7 +7,7 @@ This folder contains sound effects for game interactions and events.
 Add the following sound effect files to this directory:
 
 ### Movement & Interaction
-- `footstep.mp3` - Footstep sound (subtle, short)
+- `footstep.mp3` - **IMPORTANT** Footstep sound (plays every 0.45s while moving with WASD)
 - `jump.mp3` - Jump sound effect
 - `sit.mp3` - Sitting down sound (chair creak)
 - `stand.mp3` - Standing up sound
@@ -19,7 +19,7 @@ Add the following sound effect files to this directory:
 
 ### Mission & Events
 - `alarm.mp3` - Guard detection alarm
-- `door-lock.mp3` - Lock picking sound (clicking/scraping)
+- `door-lock.mp3` - **IMPORTANT** Lock picking sound (plays in loop while holding F at door)
 - `door-open.mp3` - Door unlocking/opening
 - `hack.mp3` - Terminal hacking sound (keyboard typing, beeps)
 - `success.mp3` - Mission success sound

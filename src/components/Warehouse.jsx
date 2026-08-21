@@ -1,6 +1,7 @@
-﻿import { useMemo, useRef } from 'react'
+﻿import { useMemo, useRef, useState } from 'react'
 import { RigidBody, CuboidCollider } from '@react-three/rapier'
 import { useFrame } from '@react-three/fiber'
+import { Text } from '@react-three/drei'
 import * as THREE from 'three'
 
 // ── Procedural textures ───────────────────────────────────────────────────────
@@ -281,6 +282,77 @@ function Barrel({ position }) {
   )
 }
 
+// ── Guard Dialog System ──────────────────────────────────────────────────────────
+
+const GUARD_DIALOG = [
+  "Nothing here...",
+  "Can't wait for tea this evening",
+  "The only good thing about this job is the pay",
+  "These night shifts are killing me",
+  "Did you hear about the break-in last week?",
+  "Same old patrol, every night",
+  "I should've become a programmer",
+  "At least it's quiet tonight",
+  "Three more hours to go...",
+  "Coffee sounds good right now",
+  "Why do we even guard this stuff?",
+  "My feet are killing me"
+]
+
+// Comic book style dialog bubble that floats above guard's head
+function DialogBubble({ text, position }) {
+  const width = Math.min(text.length * 0.10 + 0.6, 3.5)
+  const height = 0.45
+  
+  return (
+    <group position={position}>
+      {/* Main white bubble background */}
+      <mesh position={[0, 0, -0.02]}>
+        <planeGeometry args={[width, height]} />
+        <meshBasicMaterial color="#ffffff" />
+      </mesh>
+      
+      {/* Black border (slightly larger) */}
+      <mesh position={[0, 0, -0.03]}>
+        <planeGeometry args={[width + 0.08, height + 0.08]} />
+        <meshBasicMaterial color="#000000" />
+      </mesh>
+      
+      {/* Drop shadow */}
+      <mesh position={[0.08, -0.08, -0.04]}>
+        <planeGeometry args={[width + 0.08, height + 0.08]} />
+        <meshBasicMaterial color="#000000" opacity={0.8} transparent />
+      </mesh>
+      
+      {/* Tail pointer - black outline */}
+      <mesh position={[0, -height/2 - 0.15, -0.03]} rotation={[0, 0, Math.PI]}>
+        <coneGeometry args={[0.15, 0.3, 3]} />
+        <meshBasicMaterial color="#000000" />
+      </mesh>
+      
+      {/* Tail pointer - white fill */}
+      <mesh position={[0, -height/2 - 0.13, -0.02]} rotation={[0, 0, Math.PI]}>
+        <coneGeometry args={[0.12, 0.22, 3]} />
+        <meshBasicMaterial color="#ffffff" />
+      </mesh>
+      
+      {/* Text - Comic book font style */}
+      <Text
+        position={[0, 0, 0]}
+        fontSize={0.14}
+        color="#000000"
+        anchorX="center"
+        anchorY="middle"
+        maxWidth={width - 0.3}
+        fontWeight="bold"
+        letterSpacing={0.01}
+      >
+        {text}
+      </Text>
+    </group>
+  )
+}
+
 // ── OmniArc Guard ─────────────────────────────────────────────────────────────────
 
 const GUARD_ROUTES = [
@@ -298,7 +370,7 @@ const GUARD_ROUTES = [
   [{ x: -22, z: 13 }, { x: 22, z: 13 }, { x: 22, z: 17 }, { x: -22, z: 17 }],
 ]
 
-function Guard({ waypoints, speed = 1.9, walkFreq = 3.6, phaseOffset = 0, playerPosRef, onCaught }) {
+function Guard({ waypoints, speed = 1.9, walkFreq = 3.6, phaseOffset = 0, playerPosRef, onCaught, dialogPhrase }) {
   const groupRef    = useRef()
   const hipsRef     = useRef()
   const torsoRef    = useRef()
@@ -319,10 +391,24 @@ function Guard({ waypoints, speed = 1.9, walkFreq = 3.6, phaseOffset = 0, player
   const wpIdx       = useRef(0)
   const waitTimer   = useRef(0)
   const isWaiting   = useRef(false)
+  
+  // Dialog state
+  const [currentDialog, setCurrentDialog] = useState(dialogPhrase || GUARD_DIALOG[0])
+  const dialogTimer = useRef(0)
+  const [showDialog, setShowDialog] = useState(true)
 
   useFrame(({ clock }, delta) => {
     if (!groupRef.current) return
     const t = clock.elapsedTime
+
+    // Dialog timer - cycle through phrases every 8-15 seconds
+    dialogTimer.current += delta
+    if (dialogTimer.current > 8 + (phaseOffset * 2)) {
+      const newPhrase = GUARD_DIALOG[Math.floor(Math.random() * GUARD_DIALOG.length)]
+      setCurrentDialog(newPhrase)
+      setShowDialog(true)
+      dialogTimer.current = 0
+    }
 
     if (isWaiting.current) {
       waitTimer.current -= delta
@@ -457,6 +543,10 @@ function Guard({ waypoints, speed = 1.9, walkFreq = 3.6, phaseOffset = 0, player
 
   return (
     <group ref={groupRef} position={[waypoints[0].x, 0, waypoints[0].z]}>
+      {/* Dialog bubble above head */}
+      {showDialog && !detectedRef.current && (
+        <DialogBubble text={currentDialog} position={[0, 2.8, 0]} />
+      )}
 
       {/* ── Hips / legs ── */}
       <group ref={hipsRef}>
@@ -1137,6 +1227,7 @@ export default function Warehouse({ playerPosRef, onCaught, onServerNear, onNear
           phaseOffset={[0, 1.1, 2.3, 0.7, 3.5, 1.8][i]}
           playerPosRef={playerPosRef}
           onCaught={onCaught}
+          dialogPhrase={GUARD_DIALOG[i % GUARD_DIALOG.length]}
         />
       ))}
 

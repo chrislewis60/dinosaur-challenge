@@ -5,6 +5,8 @@ import './Game.css'
 import Warehouse from './Warehouse'
 import FirstPersonControls from './FirstPersonControls'
 import PlayerBody from './PlayerBody'
+import BackgroundMusic from './BackgroundMusic'
+import { useSoundManager } from './useSound'
 
 // Writes camera position into a shared ref every frame
 function PlayerTracker({ posRef }) {
@@ -47,6 +49,8 @@ export default function WarehouseLevel({ onExit }) {
 
   const playerPosRef = useRef({ x: 0, z: 18 })
   const fHeldRef     = useRef(false)
+  const { play: playSound } = useSoundManager()
+  const lockSoundPlayingRef = useRef(false)
 
   // Track F key held state
   useEffect(() => {
@@ -60,28 +64,75 @@ export default function WarehouseLevel({ onExit }) {
   // Hold-F lock-picking progress (fills while held, drains when released)
   useEffect(() => {
     if (lockPicked) return
+    
+    let lockPickInterval = null
+    
     const tick = setInterval(() => {
-      if (!nearDoor || caught) return
+      if (!nearDoor || caught) {
+        lockSoundPlayingRef.current = false
+        if (lockPickInterval) {
+          clearInterval(lockPickInterval)
+          lockPickInterval = null
+        }
+        return
+      }
       setLockProgress(prev => {
         const next = fHeldRef.current
           ? Math.min(100, prev + 2)   // ~5 s to fill
           : Math.max(0,   prev - 1.2) // drains if released
-        if (next >= 100) setLockPicked(true)
+        
+        // Play lock picking sound continuously while holding F
+        if (fHeldRef.current && !lockSoundPlayingRef.current) {
+          playSound('/sounds/door-lock.mp3', 0.4)
+          lockSoundPlayingRef.current = true
+          // Play the sound every 0.8 seconds for continuous feedback
+          lockPickInterval = setInterval(() => {
+            if (fHeldRef.current) {
+              playSound('/sounds/door-lock.mp3', 0.4)
+            }
+          }, 800)
+        } else if (!fHeldRef.current) {
+          lockSoundPlayingRef.current = false
+          if (lockPickInterval) {
+            clearInterval(lockPickInterval)
+            lockPickInterval = null
+          }
+        }
+        
+        if (next >= 100) {
+          playSound('/sounds/door-open.mp3', 0.6)
+          setLockPicked(true)
+          if (lockPickInterval) {
+            clearInterval(lockPickInterval)
+            lockPickInterval = null
+          }
+        }
         return next
       })
     }, 100)
-    return () => clearInterval(tick)
-  }, [nearDoor, lockPicked, caught])
+    
+    return () => {
+      clearInterval(tick)
+      if (lockPickInterval) {
+        clearInterval(lockPickInterval)
+      }
+    }
+  }, [nearDoor, lockPicked, caught, playSound])
 
   // F key — hack terminal (only when already inside)
   useEffect(() => {
     const onKey = (e) => {
-      if (e.code === 'KeyF' && serverNear && isLocked && !missionComplete && lockPicked)
-        setMissionComplete(true)
+      if (e.code === 'KeyF' && serverNear && isLocked && !missionComplete && lockPicked) {
+        playSound('/sounds/hack.mp3', 0.7)
+        setTimeout(() => {
+          playSound('/sounds/success.mp3', 0.8)
+          setMissionComplete(true)
+        }, 500)
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [serverNear, isLocked, missionComplete, lockPicked])
+  }, [serverNear, isLocked, missionComplete, lockPicked, playSound])
 
   const restart = () => {
     setCaught(false)
@@ -91,6 +142,7 @@ export default function WarehouseLevel({ onExit }) {
     setLockProgress(0)
     setMissionComplete(false)
     setLevelKey(k => k + 1)
+    lockSoundPlayingRef.current = false
   }
 
   // AABB boxes that block the player (cx, cz = centre; hw, hd = half-extents)
@@ -136,6 +188,9 @@ export default function WarehouseLevel({ onExit }) {
 
   return (
     <div className="game-container">
+      {/* Tense warehouse background music - starts after user clicks to play */}
+      <BackgroundMusic src="/music/warehouse.mp3" volume={0.3} play={isLocked && !missionComplete} />
+      
       {/* Start screen */}
       {!isLocked && !caught && !missionComplete && (
         <div className="game-overlay">
@@ -152,7 +207,15 @@ export default function WarehouseLevel({ onExit }) {
             <p className="subtitle" style={{ color: 'rgba(255,80,80,0.7)', marginTop: 10 }}>
               Avoid the guards — reach the server room
             </p>
-            <button className="start-btn">CLICK TO ENTER</button>
+            <button 
+              className="start-btn"
+              onClick={() => {
+                playSound('/sounds/click.mp3', 0.5)
+                setIsLocked(true)
+              }}
+            >
+              CLICK TO ENTER
+            </button>
           </div>
         </div>
       )}
@@ -195,7 +258,10 @@ export default function WarehouseLevel({ onExit }) {
             <button
               className="start-btn"
               style={{ marginTop: 28, color: '#fff', borderColor: 'rgba(255,255,255,0.6)' }}
-              onClick={restart}
+              onClick={() => {
+                playSound('/sounds/click.mp3', 0.5)
+                restart()
+              }}
             >
               TRY AGAIN
             </button>
@@ -219,7 +285,10 @@ export default function WarehouseLevel({ onExit }) {
             <button
               className="start-btn"
               style={{ marginTop: 28, color: '#00ff88', borderColor: '#00ff88' }}
-              onClick={() => onExit()}
+              onClick={() => {
+                playSound('/sounds/click.mp3', 0.5)
+                onExit()
+              }}
             >
               RETURN TO ARCADE
             </button>
@@ -236,7 +305,10 @@ export default function WarehouseLevel({ onExit }) {
         <Physics gravity={[0, -9.81, 0]}>
           <Warehouse
             playerPosRef={playerPosRef}
-            onCaught={() => setCaught(true)}
+            onCaught={() => {
+              playSound('/sounds/alarm.mp3', 0.7)
+              setCaught(true)
+            }}
             onServerNear={setServerNear}
             onNearDoor={setNearDoor}
             lockPicked={lockPicked}

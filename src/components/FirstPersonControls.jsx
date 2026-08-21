@@ -2,10 +2,13 @@ import { useRef, useEffect } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { PointerLockControls } from '@react-three/drei'
 import * as THREE from 'three'
+import { useSoundManager } from './useSound'
 
 export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onSitting, chairBodyRef, roomBounds = 4.5, furnitureCollision = true, staticColliders = [], platforms = [] }) {
   const { camera } = useThree()
   const controlsRef = useRef()
+  const { play: playSound } = useSoundManager()
+  const footstepTimer = useRef(0)
 
   const STAND_HEIGHT = 1.6
   const SIT_HEIGHT   = 0.72
@@ -150,7 +153,19 @@ export default function FirstPersonControls({ onLock, onUnlock, onNearChair, onS
     if (keys.current.s) direction.current.z += 1
     if (keys.current.a) direction.current.x -= 1
     if (keys.current.d) direction.current.x += 1
-    if (direction.current.length() > 0) direction.current.normalize()
+    
+    const isMoving = direction.current.length() > 0
+    if (isMoving) {
+      direction.current.normalize()
+      // Play footstep sound every 0.45 seconds while moving
+      footstepTimer.current += delta
+      if (footstepTimer.current >= 0.45) {
+        playSound('/sounds/footstep.mp3', 0.3)
+        footstepTimer.current = 0
+      }
+    } else {
+      footstepTimer.current = 0
+    }
 
     const forward = new THREE.Vector3()
     camera.getWorldDirection(forward)

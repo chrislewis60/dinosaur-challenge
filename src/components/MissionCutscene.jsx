@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import './Cutscene.css'
 import './MissionCutscene.css'
+import BackgroundMusic from './BackgroundMusic'
+import { useSoundManager } from './useSound'
 
 const HERO_IMG =
   '/chrislewis60_a_dino_playing_a_futureistic_game_--v_8.1_5a6897a9-48a8-4f99-896d-d781db395241_2.png'
@@ -79,6 +81,7 @@ export default function MissionCutscene({ onComplete }) {
   const [current, setCurrent] = useState(0)
   const [exiting, setExiting] = useState(false)
   const [progress, setProgress] = useState(0)
+  const { play: playSound } = useSoundManager()
 
   // Press Enter on overview to begin
   useEffect(() => {
@@ -101,12 +104,14 @@ export default function MissionCutscene({ onComplete }) {
   }, [phase, current])
 
   const startReading = () => {
+    playSound('/sounds/click.mp3', 0.5)
     setPhase('zooming')
     setTimeout(() => { setPhase('reading'); setCurrent(0) }, 450)
   }
 
   const goTo = (index) => {
     if (exiting || index === current) return
+    playSound('/sounds/click.mp3', 0.3)
     setExiting(true)
     setTimeout(() => { setCurrent(index); setExiting(false) }, 260)
   }
@@ -118,12 +123,21 @@ export default function MissionCutscene({ onComplete }) {
 
   return (
     <div className="cutscene-screen">
+      <BackgroundMusic src="/music/mission.mp3" volume={0.4} play={true} />
       <div className="cutscene-header">
         <div>
           <span className="cutscene-logo">REX VOLTAGE</span>
           <span className="cutscene-subtitle">Mission Start</span>
         </div>
-        <button className="skip-btn" onClick={onComplete}>SKIP ▶</button>
+        <button 
+          className="skip-btn" 
+          onClick={() => {
+            playSound('/sounds/click.mp3', 0.5)
+            onComplete()
+          }}
+        >
+          SKIP ▶
+        </button>
       </div>
 
       {/* ── OVERVIEW: all panels as a comic book page ── */}

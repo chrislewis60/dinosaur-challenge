@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Test Music Files</title>
+</head>
+<body>
+    <h1>Generate Test Music</h1>
+    <p>Click the buttons below to generate and download test music files:</p>
+    <button onclick="generateArcadeMusic()">Generate Arcade Music</button>
+    <button onclick="generateWarehouseMusic()">Generate Warehouse Music</button>
+    <p id="status"></p>
+
+    <script>
+        function createAudioBlob(notes, tempo, duration) {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const sampleRate = audioContext.sampleRate;
+            const length = sampleRate * duration;
+            const audioBuffer = audioContext.createBuffer(1, length, sampleRate);
+            const channelData = audioBuffer.getChannelData(0);
+            
+            let time = 0;
+            const beatLength = 60 / tempo;
+            
+            for (let i = 0; i < length; i++) {
+                const t = i / sampleRate;
+                let sample = 0;
+                
+                // Play notes
+                const noteIndex = Math.floor(t / beatLength) % notes.length;
+                const freq = notes[noteIndex];
+                
+                if (freq > 0) {
+                    // Square wave for retro sound
+                    sample += Math.sign(Math.sin(2 * Math.PI * freq * t)) * 0.1;
+                    // Add harmonics
+                    sample += Math.sign(Math.sin(2 * Math.PI * freq * 2 * t)) * 0.05;
+                }
+                
+                // Envelope
+                const noteTime = (t % beatLength) / beatLength;
+                const envelope = Math.max(0, 1 - noteTime * 2);
+                sample *= envelope;
+                
+                channelData[i] = sample;
+            }
+            
+            return audioBufferToWav(audioBuffer);
+        }
+        
+        function audioBufferToWav(buffer) {
+            const length = buffer.length * buffer.numberOfChannels * 2;
+            const arrayBuffer = new ArrayBuffer(44 + length);
+            const view = new DataView(arrayBuffer);
+            const channels = [];
+            let offset = 0;
+            let pos = 0;
+            
+            // WAV header
+            const writeString = (str) => {
+                for (let i = 0; i < str.length; i++) {
+                    view.setUint8(pos++, str.charCodeAt(i));
+                }
+            };
+            
+            writeString('RIFF');
+            view.setUint32(pos, 36 + length, true); pos += 4;
+            writeString('WAVE');
+            writeString('fmt ');
+            view.setUint32(pos, 16, true); pos += 4;
+            view.setUint16(pos, 1, true); pos += 2;
+            view.setUint16(pos, buffer.numberOfChannels, true); pos += 2;
+            view.setUint32(pos, buffer.sampleRate, true); pos += 4;
+            view.setUint32(pos, buffer.sampleRate * 2 * buffer.numberOfChannels, true); pos += 4;
+            view.setUint16(pos, buffer.numberOfChannels * 2, true); pos += 2;
+            view.setUint16(pos, 16, true); pos += 2;
+            writeString('data');
+            view.setUint32(pos, length, true); pos += 4;
+            
+            // Audio data
+            for (let i = 0; i < buffer.length; i++) {
+                for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+                    const sample = Math.max(-1, Math.min(1, buffer.getChannelData(channel)[i]));
+                    view.setInt16(pos, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                    pos += 2;
+                }
+            }
+            
+            return new Blob([arrayBuffer], { type: 'audio/wav' });
+        }
+        
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        function generateArcadeMusic() {
+            document.getElementById('status').textContent = 'Generating arcade music...';
+            
+            setTimeout(() => {
+                // Upbeat arcade melody
+                const notes = [
+                    523.25, 587.33, 659.25, 783.99,  // C5, D5, E5, G5
+                    783.99, 659.25, 587.33, 523.25,  // G5, E5, D5, C5
+                    659.25, 783.99, 880.00, 783.99,  // E5, G5, A5, G5
+                    659.25, 587.33, 523.25, 0         // E5, D5, C5, rest
+                ];
+                
+                const blob = createAudioBlob(notes, 240, 16);
+                downloadBlob(blob, 'arcade.mp3');
+                document.getElementById('status').textContent = 'Arcade music downloaded! Move it to public/music/';
+            }, 100);
+        }
+        
+        function generateWarehouseMusic() {
+            document.getElementById('status').textContent = 'Generating warehouse music...';
+            
+            setTimeout(() => {
+                // Dark, tense atmosphere
+                const notes = [
+                    110.00, 0, 110.00, 0,           // A2, rest (slow bass)
+                    116.54, 0, 116.54, 0,           // A#2, rest
+                    123.47, 0, 116.54, 0,           // B2, A#2
+                    110.00, 0, 0, 0                 // A2, silence
+                ];
+                
+                const blob = createAudioBlob(notes, 120, 16);
+                downloadBlob(blob, 'warehouse.mp3');
+                document.getElementById('status').textContent = 'Warehouse music downloaded! Move it to public/music/';
+            }, 100);
+        }
+    </script>
+</body>
+</html>

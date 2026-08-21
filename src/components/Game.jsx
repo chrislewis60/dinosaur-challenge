@@ -6,6 +6,8 @@ import './Game.css'
 import ArcadeRoom from './ArcadeRoom'
 import FirstPersonControls from './FirstPersonControls'
 import PlayerBody from './PlayerBody'
+import BackgroundMusic from './BackgroundMusic'
+import { useSoundManager } from './useSound'
 
 // Steady room lighting
 function CeilingLights() {
@@ -26,18 +28,22 @@ export default function Game({ onExit, onMissionStart }) {
   const [missionReady, setMissionReady] = useState(false)
   const chairBodyRef = useRef()
   const missionTimerRef = useRef(null)
+  const { play: playSound } = useSoundManager()
 
   // Left-click while sitting + mission ready triggers the mission cutscene
   useEffect(() => {
     if (!sitting || !missionReady) return
     const handleMouseDown = (e) => {
-      if (e.button === 0) onMissionStart?.()
+      if (e.button === 0) {
+        playSound('/sounds/mission-start.mp3', 0.6)
+        onMissionStart?.()
+      }
     }
     document.addEventListener('mousedown', handleMouseDown)
     return () => {
       document.removeEventListener('mousedown', handleMouseDown)
     }
-  }, [sitting, missionReady, onMissionStart])
+  }, [sitting, missionReady, onMissionStart, playSound])
 
   // 1.5 s loading phase, then reveal mission button
   useEffect(() => {
@@ -52,6 +58,9 @@ export default function Game({ onExit, onMissionStart }) {
 
   return (
     <div className="game-container">
+      {/* Arcade background music - starts after user clicks to play */}
+      <BackgroundMusic src="/music/arcade.mp3" volume={0.25} play={isLocked} />
+      
       {!isLocked && (
         <div className="game-overlay">
           <div className="game-instructions">
@@ -62,7 +71,12 @@ export default function Game({ onExit, onMissionStart }) {
               <p><strong>MOUSE</strong> — Look Around</p>
               <p><strong>ESC</strong> — Pause</p>
             </div>
-            <button className="start-btn">CLICK TO START</button>
+            <button 
+              className="start-btn"
+              onClick={() => playSound('/sounds/click.mp3', 0.5)}
+            >
+              CLICK TO START
+            </button>
           </div>
         </div>
       )}
@@ -98,7 +112,10 @@ export default function Game({ onExit, onMissionStart }) {
             onLock={() => setIsLocked(true)}
             onUnlock={() => setIsLocked(false)}
             onNearChair={setNearChair}
-            onSitting={setSitting}
+            onSitting={(isSitting) => {
+              playSound(isSitting ? '/sounds/sit.mp3' : '/sounds/stand.mp3', 0.4)
+              setSitting(isSitting)
+            }}
             chairBodyRef={chairBodyRef}
           />
         </Physics>
@@ -107,7 +124,10 @@ export default function Game({ onExit, onMissionStart }) {
       {isLocked && (
         <button 
           className="exit-btn"
-          onClick={onExit}
+          onClick={() => {
+            playSound('/sounds/click.mp3', 0.5)
+            onExit()
+          }}
           onPointerDown={(e) => e.stopPropagation()}
         >
           EXIT

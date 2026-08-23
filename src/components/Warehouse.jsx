@@ -445,7 +445,7 @@ function Guard({ waypoints, speed = 1.9, walkFreq = 3.6, phaseOffset = 0, player
     if (diff < -Math.PI) diff += Math.PI * 2
     groupRef.current.rotation.y += diff * Math.min(1, delta * 8)
 
-    // Guard detection — check player position every frame
+    // Guard detection — check player position every frame with line-of-sight
     if (playerPosRef && groupRef.current && !detectedRef.current) {
       const px = playerPosRef.current.x
       const pz = playerPosRef.current.z
@@ -455,15 +455,55 @@ function Guard({ waypoints, speed = 1.9, walkFreq = 3.6, phaseOffset = 0, player
       const distSq = dx*dx + dz*dz
 
       let spotted = false
-      // Very close — always detected (< 1 unit)
-      if (distSq < 1.0) spotted = true
-      // In front vision cone (90° total, 4 unit range)
-      if (!spotted && distSq < 16) {
+      
+      // Check if player is in vision range and cone
+      // Very close — always detected (< 1.2 units)
+      if (distSq < 1.44) {
+        spotted = true
+      }
+      // In front vision cone (90° total, 6 unit range)
+      else if (distSq < 36) {
         const facing = groupRef.current.rotation.y
         let diff = Math.atan2(dx, dz) - facing
         if (diff >  Math.PI) diff -= Math.PI * 2
         if (diff < -Math.PI) diff += Math.PI * 2
-        if (Math.abs(diff) < 0.78) spotted = true   // ~45° half-angle
+        if (Math.abs(diff) < 0.78) {   // ~45° half-angle
+          // Check line-of-sight — blocked by shelf rows, walls, or server room
+          const hasLineOfSight = (() => {
+            // Shelf row positions (x-coords of the 5 shelf columns)
+            const shelfX = [-22, -11, 0, 11, 22]
+            const shelfHalfWidth = 0.55  // Half-width of each shelf column
+            const shelfZ = { min: -21, max: 9 }  // Shelf depth range
+            
+            // Check if line crosses any shelf column
+            for (const sx of shelfX) {
+              // Simple AABB line intersection check
+              const minX = Math.min(gx, px)
+              const maxX = Math.max(gx, px)
+              const minZ = Math.min(gz, pz)
+              const maxZ = Math.max(gz, pz)
+              
+              // If guard and player are on opposite sides of a shelf column
+              if (minX < sx - shelfHalfWidth && maxX > sx + shelfHalfWidth) {
+                // Check if the line passes through the shelf's Z range
+                if (!(maxZ < shelfZ.min || minZ > shelfZ.max)) {
+                  // Line crosses this shelf column - blocked!
+                  return false
+                }
+              }
+            }
+            
+            // Check server room walls (back wall area)
+            if ((gz < -22 && pz > -22) || (gz > -22 && pz < -22)) {
+              // Guard and player on opposite sides of server room wall
+              if (Math.abs(px) < 7 && Math.abs(gx) < 7) return false
+            }
+            
+            return true  // Clear line of sight
+          })()
+          
+          if (hasLineOfSight) spotted = true
+        }
       }
 
       if (spotted) {
@@ -1206,16 +1246,6 @@ export default function Warehouse({ playerPosRef, onCaught, onServerNear, onNear
           </group>
         ))
       )}
-
-      {/* Loading dock (free front area) */}
-      <mesh position={[0, 0.18, 20]} receiveShadow>
-        <boxGeometry args={[14, 0.36, 6]} />
-        <meshStandardMaterial color="#3a3835" roughness={0.95} />
-      </mesh>
-      <mesh position={[0, 0.37, 17.05]}>
-        <boxGeometry args={[14, 0.04, 0.15]} />
-        <meshStandardMaterial color="#ffcc00" emissive="#ffcc00" emissiveIntensity={0.4} />
-      </mesh>
 
       {/* OmniArc Guards on patrol — each with a different speed, walk rate and start phase */}
       {GUARD_ROUTES.map((route, i) => (

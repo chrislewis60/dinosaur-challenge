@@ -37,7 +37,7 @@ function PhysicsPlayer() {
   )
 }
 
-export default function WarehouseLevel({ onExit }) {
+export default function WarehouseLevel({ onExit, onComplete }) {
   const [isLocked,       setIsLocked]       = useState(false)
   const [caught,         setCaught]         = useState(false)
   const [serverNear,     setServerNear]     = useState(false)
@@ -119,20 +119,25 @@ export default function WarehouseLevel({ onExit }) {
     }
   }, [nearDoor, lockPicked, caught, playSound])
 
-  // F key — hack terminal (only when already inside)
+  // F key — access terminal to complete mission
   useEffect(() => {
     const onKey = (e) => {
       if (e.code === 'KeyF' && serverNear && isLocked && !missionComplete && lockPicked) {
+        // Access terminal to complete mission
         playSound('/sounds/hack.mp3', 0.7)
         setTimeout(() => {
           playSound('/sounds/success.mp3', 0.8)
           setMissionComplete(true)
+          // Automatically trigger completion cutscene after 1.5 seconds
+          setTimeout(() => {
+            onComplete?.()
+          }, 1500)
         }, 500)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [serverNear, isLocked, missionComplete, lockPicked, playSound])
+  }, [serverNear, isLocked, missionComplete, lockPicked, playSound, onComplete])
 
   const restart = () => {
     setCaught(false)
@@ -205,7 +210,7 @@ export default function WarehouseLevel({ onExit }) {
               <p><strong>ESC</strong> — Pause</p>
             </div>
             <p className="subtitle" style={{ color: 'rgba(255,80,80,0.7)', marginTop: 10 }}>
-              Avoid the guards — reach the server room
+              Find the stolen game records and upload them to the government servers
             </p>
             <button 
               className="start-btn"
@@ -224,14 +229,14 @@ export default function WarehouseLevel({ onExit }) {
       {isLocked && !caught && !missionComplete && (
         <div className="game-hud">
           <div className="hud-corner top-left">
-            <div className="hud-label">WAREHOUSE DISTRICT</div>
+            <div className="hud-label">LEVEL 1: WAREHOUSE</div>
           </div>
           <div className="hud-corner top-right">
             <div className="hud-label">SECTOR 7</div>
           </div>
           <div className="hud-corner" style={{ bottom: 60, left: '50%', transform: 'translateX(-50%)', top: 'auto' }}>
             {serverNear && lockPicked
-              ? <div className="hud-label" style={{ color: '#00ff88', borderColor: '#00ff88', animation: 'none' }}>PRESS F — HACK TERMINAL</div>
+              ? <div className="hud-label" style={{ color: '#00ff88', borderColor: '#00ff88', animation: 'none' }}>PRESS F — ACCESS TERMINAL</div>
               : nearDoor && !lockPicked
               ? <div style={{ textAlign: 'center' }}>
                   <div className="hud-label">HOLD F — PICK LOCK</div>
@@ -240,7 +245,7 @@ export default function WarehouseLevel({ onExit }) {
                   </div>
                 </div>
               : lockPicked
-              ? <div className="hud-label" style={{ color: '#00ff88', borderColor: '#00ff88' }}>LOCK BROKEN — FIND THE TERMINAL</div>
+              ? <div className="hud-label" style={{ color: '#00ff88', borderColor: '#00ff88' }}>GO TO SERVER ROOM</div>
               : <div className="hud-label">OBJECTIVE: FIND THE SERVER ROOM</div>
             }
           </div>
@@ -269,29 +274,19 @@ export default function WarehouseLevel({ onExit }) {
         </div>
       )}
 
-      {/* Mission complete overlay */}
+      {/* Mission complete overlay - brief flash before moving to level 2 */}
       {missionComplete && (
-        <div className="game-overlay" style={{ background: 'rgba(0,15,0,0.94)' }}>
+        <div className="game-overlay" style={{ background: 'rgba(0,15,0,0.94)', animation: 'fadeIn 0.5s ease-in' }}>
           <div className="game-instructions">
             <h1 style={{ color: '#00ff88', letterSpacing: 8, textShadow: '0 0 40px #00ff88' }}>
-              SCORES RESTORED!
+              LEVEL 1 COMPLETE!
             </h1>
             <p className="subtitle" style={{ color: 'rgba(0,255,136,0.7)' }}>
-              Every score. Every legend. Back online.
+              Data retrieved from warehouse terminal
             </p>
             <p className="subtitle" style={{ color: 'rgba(168,218,255,0.5)', marginTop: 10 }}>
-              Rex Voltage — Undefeated Champion
+              Proceeding to Level 2: Police HQ
             </p>
-            <button
-              className="start-btn"
-              style={{ marginTop: 28, color: '#00ff88', borderColor: '#00ff88' }}
-              onClick={() => {
-                playSound('/sounds/click.mp3', 0.5)
-                onExit()
-              }}
-            >
-              RETURN TO ARCADE
-            </button>
           </div>
         </div>
       )}

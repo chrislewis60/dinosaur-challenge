@@ -21,7 +21,7 @@ function CeilingLights() {
   )
 }
 
-export default function Game({ onExit, onMissionStart }) {
+export default function Game({ onExit, onMissionStart, levelCompleted = false }) {
   const [isLocked, setIsLocked] = useState(false)
   const [nearChair, setNearChair] = useState(false)
   const [sitting, setSitting] = useState(false)
@@ -35,13 +35,15 @@ export default function Game({ onExit, onMissionStart }) {
     if (!sitting || !missionReady) return
     const handleMouseDown = (e) => {
       if (e.button === 0) {
+        e.preventDefault()
+        e.stopPropagation()
         playSound('/sounds/mission-start.mp3', 0.6)
         onMissionStart?.()
       }
     }
-    document.addEventListener('mousedown', handleMouseDown)
+    document.addEventListener('mousedown', handleMouseDown, true) // Use capture phase
     return () => {
-      document.removeEventListener('mousedown', handleMouseDown)
+      document.removeEventListener('mousedown', handleMouseDown, true)
     }
   }, [sitting, missionReady, onMissionStart, playSound])
 
@@ -89,9 +91,23 @@ export default function Game({ onExit, onMissionStart }) {
           <div className="hud-corner top-right">
             <div className="hud-label">UNDERGROUND</div>
           </div>
+          {levelCompleted && !sitting && (
+            <div className="hud-corner" style={{ bottom: 120, left: '50%', transform: 'translateX(-50%)', top: 'auto' }}>
+              <div className="hud-label" style={{ 
+                color: '#ffcc00', 
+                borderColor: '#ffcc00',
+                fontSize: '18px',
+                padding: '12px 24px',
+                animation: 'pulse 2s ease-in-out infinite',
+                background: 'rgba(255, 204, 0, 0.1)'
+              }}>
+                ★ LEVEL 2 AVAILABLE ★
+              </div>
+            </div>
+          )}
           {nearChair && (
             <div className="hud-corner" style={{ bottom: 60, left: '50%', transform: 'translateX(-50%)', top: 'auto' }}>
-              <div className="hud-label">{sitting ? '\u2193 STAND UP' : '\u2193 SIT DOWN'}</div>
+              <div className="hud-label">{sitting ? '↓ STAND UP' : '↓ SIT DOWN'}</div>
             </div>
           )}
         </div>

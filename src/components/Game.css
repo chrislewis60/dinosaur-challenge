@@ -290,3 +290,21 @@
   z-index: 40;
   font-family: 'Share Tech Mono', monospace;
 }
+
+/* ── Level 2 Available pulse animation ── */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 12px rgba(255, 204, 0, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(255, 204, 0, 0.8);
+  }
+}
+
+/* ── Fade in animation ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

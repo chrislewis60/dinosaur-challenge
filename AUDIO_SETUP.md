@@ -1,44 +1,43 @@
 # Audio Setup Guide
 
-Your game now has immersive sound effects integrated throughout! This guide will help you add the music and sound effect files.
+Your game now has immersive sound effects integrated throughout! **Test sound files have been automatically generated!**
 
-## 🎵 Music Files Required
+## ✅ Current Status
 
-Add these files to `public/music/`:
+### Music Files (public/music/)
+- ✅ **arcade.mp3** - Background music for arcade room
+- ✅ **warehouse.mp3** - Background music for warehouse mission
 
-### Background Music
-- **arcade.mp3** ✅ (already present) - Underground arcade scene
-- **warehouse.mp3** ✅ (already present) - Warehouse stealth mission
-- **cutscene.mp3** ⚠️ (NEW) - Opening story cutscene
-- **mission.mp3** ⚠️ (NEW) - Mission briefing cutscene
+### Sound Effects (public/sounds/)
+- ✅ **click.mp3** - Button click sound
+- ✅ **sit.mp3** - Sitting down sound  
+- ✅ **stand.mp3** - Standing up sound
+- ✅ **footstep.mp3** - Walking sound (plays every 0.45s while moving)
+- ✅ **mission-start.mp3** - Mission activation sound
+- ✅ **door-lock.mp3** - Lock picking sound (loops while holding F)
+- ✅ **door-open.mp3** - Door unlocking/opening
+- ✅ **alarm.mp3** - Guard detection alarm
+- ✅ **hack.mp3** - Terminal hacking sound
+- ✅ **success.mp3** - Mission complete sound
+- ✅ **jump.mp3** - Jump sound (optional)
 
-**Suggested Styles:**
-- **cutscene.mp3**: Cinematic, dramatic orchestral or synthwave intro music
-- **mission.mp3**: Tense, suspenseful electronic music (think spy movie)
+## 🎮 How to Hear the Audio
 
-## 🔊 Sound Effects Required
+1. **Start the game**: Make sure your dev server is running (`npm run dev`)
+2. **Click "CLICK TO START"**: This is IMPORTANT - browsers require a user interaction to start audio
+3. **Listen**: You should now hear the arcade background music and sound effects!
 
-Add these files to `public/sounds/`:
+## 🔇 Troubleshooting
 
-### UI & Interaction Sounds
-- **click.mp3** - Button click sound (sharp, digital beep)
-- **interact.mp3** - General interaction feedback (optional)
+If you can't hear audio:
 
-### Character Actions
-- **footstep.mp3** - Walking sound (plays every 0.45s while moving)
-- **sit.mp3** - Sitting down sound (chair creak/cushion)
-- **stand.mp3** - Standing up sound (subtle chair noise)
-- **jump.mp3** - Jump sound (optional for future use)
+1. **Check browser console** (F12) for audio warnings
+2. **Verify you clicked "CLICK TO START"** - this is required by browsers for audio playback
+3. **Check volume settings** - Press ESC in-game to access volume controls
+4. **Check browser audio** - Make sure your browser tab isn't muted
+5. **Try clicking anywhere** - Some browsers need a click to enable audio
 
-### Mission Sounds
-- **mission-start.mp3** - Mission activation sound (digital/tech startup)
-- **door-lock.mp3** - Lock picking sound (clicking, scraping - plays continuously while holding F)
-- **door-open.mp3** - Door unlocking/opening (latch click, creak)
-- **alarm.mp3** - Guard detection alarm (urgent beeping/siren)
-- **hack.mp3** - Terminal hacking sound (rapid keyboard typing, beeps)
-- **success.mp3** - Mission complete sound (triumphant chime/fanfare)
-
-## 📦 Where to Find Audio Files
+## 🎵 Replace with Better Audio (Optional)
 
 ### Free Music Sources
 - **Incompetech** (Kevin MacLeod) - https://incompetech.com/music/

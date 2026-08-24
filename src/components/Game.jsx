@@ -75,7 +75,14 @@ export default function Game({ onExit, onMissionStart, levelCompleted = false })
             </div>
             <button 
               className="start-btn"
-              onClick={() => playSound('/sounds/click.mp3', 0.5)}
+              onClick={() => {
+                playSound('/sounds/click.mp3', 0.5)
+                // Trigger pointer lock to start the game
+                const canvas = document.querySelector('canvas')
+                if (canvas) {
+                  canvas.requestPointerLock()
+                }
+              }}
             >
               CLICK TO START
             </button>

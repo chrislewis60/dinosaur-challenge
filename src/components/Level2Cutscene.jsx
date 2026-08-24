@@ -77,15 +77,7 @@ export default function Level2Cutscene({ onComplete }) {
   const [progress, setProgress] = useState(0)
   const { play: playSound } = useSoundManager()
 
-  // Auto-start after 1 second
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (phase === 'overview') startReading()
-    }, 1000)
-    return () => clearTimeout(timer)
-  }, [])
-
-  // Press Enter on overview to begin manually
+  // Press Enter on overview to begin
   useEffect(() => {
     if (phase !== 'overview') return
     const onKey = (e) => { if (e.key === 'Enter') startReading() }
@@ -151,60 +143,82 @@ export default function Level2Cutscene({ onComplete }) {
           {PANELS.map((p, i) => (
             <div
               key={p.id}
-              className={`comic-panel theme-${p.theme}`}
-              style={{ backgroundImage: p.bg ? `url(${p.bg})` : 'none' }}
+              className={`overview-panel panel-slot-${i + 1} theme-${p.theme}`}
+              style={p.bg ? { '--panel-bg': `url(${p.bg})` } : {}}
             >
-              {p.hero && <img src={HERO_IMG} alt="" className="panel-hero" />}
-              {p.location && <div className="panel-loc">{p.location}</div>}
-              {p.narration && <div className="panel-narration">{p.narration}</div>}
-              {p.sfx && <div className="panel-sfx">{p.sfx}</div>}
-              {p.caption && <div className="panel-caption">{p.caption}</div>}
-              {p.alert && <div className="panel-alert">{p.alert}</div>}
-              {p.speech && <div className="panel-speech">{p.speech}</div>}
+              {p.bg && <div className="panel-bg-img" />}
+              <div className="panel-color-overlay" />
+              <div className="panel-halftone" />
+              {p.location && <div className="mini-location">{p.location}</div>}
+              {p.sfx      && <div className="mini-sfx">{p.sfx}</div>}
+              {p.speech   && <div className="mini-speech">{p.speech.split('\n')[0]}</div>}
             </div>
           ))}
-          <div className="overview-instruction">PRESS ENTER TO BEGIN</div>
+          <div className="overview-hint">CLICK OR PRESS ENTER</div>
         </div>
       )}
 
-      {/* ── READING MODE: one focused panel ── */}
+      {/* ── READING: one panel at a time ── */}
       {phase === 'reading' && (
-        <div className="reading-mode" onClick={advance}>
+        <>
           <div
-            className={`focused-panel theme-${panel.theme} ${exiting ? 'exiting' : ''}`}
-            style={{ backgroundImage: panel.bg ? `url(${panel.bg})` : 'none' }}
+            className={`comic-panel theme-${panel.theme} ${exiting ? 'panel-exit' : 'reading-enter'}`}
+            onClick={isLast ? undefined : advance}
+            style={panel.bg ? { '--panel-bg': `url(${panel.bg})` } : {}}
           >
-            {panel.hero && <img src={HERO_IMG} alt="" className="panel-hero" />}
-            {panel.location && <div className="panel-loc">{panel.location}</div>}
-            {panel.narration && <div className="panel-narration">{panel.narration}</div>}
-            {panel.sfx && <div className="panel-sfx">{panel.sfx}</div>}
-            {panel.caption && <div className="panel-caption">{panel.caption}</div>}
-            {panel.alert && <div className="panel-alert">{panel.alert}</div>}
-            {panel.speech && <div className="panel-speech">{panel.speech}</div>}
+            <div className="panel-image-section">
+              {panel.bg && <div className="panel-bg-img" />}
+              <div className="panel-color-overlay" />
+              <div className="panel-halftone" />
+
+              {panel.location && <div className="caption-box location-cap">{panel.location}</div>}
+              {panel.sfx      && <div className="sfx-word">{panel.sfx}</div>}
+              {panel.alert    && <div className="alert-box"><pre>{panel.alert}</pre></div>}
+
+              {panel.hero && !panel.bg && (
+                <img
+                  src={HERO_IMG}
+                  alt="Rex Voltage"
+                  className="hero-portrait"
+                />
+              )}
+
+              {panel.speech && (
+                <div className="speech-bubble">
+                  <div className="speech-tail" />
+                  {panel.speech}
+                </div>
+              )}
+            </div>
+
+            <div className="panel-text-section">
+              {panel.caption   && <div className="caption-box bottom-cap">{panel.caption}</div>}
+              {panel.narration && <div className="narration-box">{panel.narration}</div>}
+            </div>
 
             {!isLast && (
-              <div className="progress-container">
-                <div className="progress-bar" style={{ width: `${progress}%` }} />
+              <div className="auto-progress">
+                <div className="progress-fill" style={{ width: `${progress}%` }} />
               </div>
             )}
           </div>
 
-          <div className="reading-nav">
+          <div className="panel-nav">
             {isLast ? (
               <button 
-                className="continue-btn" 
+                className="action-btn big" 
                 onClick={() => {
-                  playSound('/sounds/start.mp3', 0.6)
+                  playSound('/sounds/mission-start.mp3', 0.6)
                   onComplete()
                 }}
               >
                 BEGIN LEVEL 2 →
               </button>
             ) : (
-              <div className="reading-hint">CLICK TO ADVANCE</div>
+              <div className="nav-hint">CLICK TO ADVANCE</div>
             )}
           </div>
-        </div>
+        </>
       )}
     </div>
   )

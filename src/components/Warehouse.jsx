@@ -732,9 +732,9 @@ function Guard({ waypoints, speed = 1.9, walkFreq = 3.6, phaseOffset = 0, player
         </group>
       </group>
 
-      {/* ── Torso / tiny arms / dinosaur head ── */}
-      <group ref={torsoRef} position={[0, 0.92, 0]} rotation={[0.2, 0, 0]}>
-        {/* Main torso - tilted forward like T-Rex */}
+      {/* ── Torso / arm / dinosaur head ── */}
+      <group ref={torsoRef} position={[0, 0.92, 0]} rotation={[0.08, 0, 0]}>
+        {/* Main torso - more upright, less hunched */}
         <mesh position={[0, 0.28, 0]} castShadow>
           <boxGeometry args={[0.42, 0.55, 0.35]} />
           <meshStandardMaterial color={C.body} roughness={0.85} />
@@ -760,43 +760,42 @@ function Guard({ waypoints, speed = 1.9, walkFreq = 3.6, phaseOffset = 0, player
           </mesh>
         ))}
 
-        {/* Left arm - TINY T-Rex style */}
-        <group ref={leftArmRef} position={[-0.24, 0.38, 0.05]}>
-          <mesh position={[0, -0.08, 0]} castShadow>
-            <cylinderGeometry args={[0.04, 0.035, 0.18, 6]} />
+        {/* Left arm - longer, wider T-Rex style */}
+        <group ref={leftArmRef} position={[-0.30, 0.33, 0.10]}>
+          <mesh position={[0, -0.12, 0]} castShadow>
+            <cylinderGeometry args={[0.05, 0.04, 0.31, 6]} />
             <meshStandardMaterial color={C.body} roughness={0.85} />
           </mesh>
-          {/* Tiny hand with two claws */}
-          <mesh position={[0, -0.18, 0]} castShadow>
-            <boxGeometry args={[0.06, 0.05, 0.04]} />
+          <mesh position={[0, -0.25, 0.03]} castShadow>
+            <boxGeometry args={[0.09, 0.08, 0.06]} />
             <meshStandardMaterial color={C.scales} roughness={0.9} />
           </mesh>
-          <mesh position={[-0.02, -0.20, 0.02]} rotation={[0.4, 0.2, 0]}>
-            <coneGeometry args={[0.012, 0.05, 4]} />
+          <mesh position={[-0.025, -0.29, 0.05]} rotation={[0.4, 0.2, 0]}>
+            <coneGeometry args={[0.014, 0.07, 4]} />
             <meshStandardMaterial color={C.claws} roughness={0.7} />
           </mesh>
-          <mesh position={[0.02, -0.20, 0.02]} rotation={[0.4, -0.2, 0]}>
-            <coneGeometry args={[0.012, 0.05, 4]} />
+          <mesh position={[0.025, -0.29, 0.05]} rotation={[0.4, -0.2, 0]}>
+            <coneGeometry args={[0.014, 0.07, 4]} />
             <meshStandardMaterial color={C.claws} roughness={0.7} />
           </mesh>
         </group>
 
-        {/* Right arm - TINY T-Rex style */}
-        <group ref={rightArmRef} position={[0.24, 0.38, 0.05]}>
-          <mesh position={[0, -0.08, 0]} castShadow>
-            <cylinderGeometry args={[0.04, 0.035, 0.18, 6]} />
+        {/* Right arm - longer, wider T-Rex style */}
+        <group ref={rightArmRef} position={[0.30, 0.33, 0.10]}>
+          <mesh position={[0, -0.12, 0]} castShadow>
+            <cylinderGeometry args={[0.05, 0.04, 0.31, 6]} />
             <meshStandardMaterial color={C.body} roughness={0.85} />
           </mesh>
-          <mesh position={[0, -0.18, 0]} castShadow>
-            <boxGeometry args={[0.06, 0.05, 0.04]} />
+          <mesh position={[0, -0.25, 0.03]} castShadow>
+            <boxGeometry args={[0.09, 0.08, 0.06]} />
             <meshStandardMaterial color={C.scales} roughness={0.9} />
           </mesh>
-          <mesh position={[-0.02, -0.20, 0.02]} rotation={[0.4, 0.2, 0]}>
-            <coneGeometry args={[0.012, 0.05, 4]} />
+          <mesh position={[-0.025, -0.29, 0.05]} rotation={[0.4, 0.2, 0]}>
+            <coneGeometry args={[0.014, 0.07, 4]} />
             <meshStandardMaterial color={C.claws} roughness={0.7} />
           </mesh>
-          <mesh position={[0.02, -0.20, 0.02]} rotation={[0.4, -0.2, 0]}>
-            <coneGeometry args={[0.012, 0.05, 4]} />
+          <mesh position={[0.025, -0.29, 0.05]} rotation={[0.4, -0.2, 0]}>
+            <coneGeometry args={[0.014, 0.07, 4]} />
             <meshStandardMaterial color={C.claws} roughness={0.7} />
           </mesh>
         </group>

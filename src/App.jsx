@@ -13,6 +13,14 @@ function App() {
   const [warehouseCompleted, setWarehouseCompleted] = useState(false)
   const [policeStationCompleted, setPoliceStationCompleted] = useState(false)
 
+  const startMissionBySelection = (selectedIndex) => {
+    if (selectedIndex === 1 && warehouseCompleted) {
+      setScene('level2-cutscene')
+      return
+    }
+    setScene('mission-cutscene')
+  }
+
   return (
     <div id="game-root">
       {scene === 'cutscene' && (
@@ -21,8 +29,10 @@ function App() {
       {scene === 'game' && (
         <Game
           onExit={() => setScene('cutscene')}
-          onMissionStart={() => setScene('mission-cutscene')}
+          onMissionStart={startMissionBySelection}
           levelCompleted={warehouseCompleted && policeStationCompleted}
+          warehouseCompleted={warehouseCompleted}
+          policeStationCompleted={policeStationCompleted}
         />
       )}
       {scene === 'mission-cutscene' && (

@@ -21,16 +21,52 @@ function CeilingLights() {
   )
 }
 
-export default function Game({ onExit, onMissionStart, levelCompleted = false }) {
+export default function Game({ onExit, onMissionStart, levelCompleted = false, warehouseCompleted = false, policeStationCompleted = false }) {
   const [isLocked, setIsLocked] = useState(false)
   const [nearChair, setNearChair] = useState(false)
   const [sitting, setSitting] = useState(false)
   const [missionReady, setMissionReady] = useState(false)
+  const [selectedMissionIndex, setSelectedMissionIndex] = useState(0)
   const chairBodyRef = useRef()
   const missionTimerRef = useRef(null)
   const { play: playSound } = useSoundManager()
 
-  // Left-click while sitting + mission ready triggers the mission cutscene
+  const missionOptions = [
+    { id: 'warehouse', label: 'WAREHOUSE', enabled: true },
+    { id: 'police', label: 'POLICE HQ', enabled: warehouseCompleted }
+  ]
+
+  useEffect(() => {
+    if (!missionOptions[1].enabled && selectedMissionIndex > 0) {
+      setSelectedMissionIndex(0)
+    }
+  }, [missionOptions, selectedMissionIndex])
+
+  useEffect(() => {
+    if (!sitting || !missionReady) return
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        setSelectedMissionIndex((prev) => {
+          const nextIndex = Math.max(0, prev - 1)
+          return missionOptions[nextIndex].enabled ? nextIndex : prev
+        })
+      }
+      if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        setSelectedMissionIndex((prev) => {
+          const nextIndex = Math.min(missionOptions.length - 1, prev + 1)
+          return missionOptions[nextIndex].enabled ? nextIndex : prev
+        })
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [sitting, missionReady, missionOptions])
+
+  // Left-click while sitting + mission ready triggers the selected mission
   useEffect(() => {
     if (!sitting || !missionReady) return
     const handleMouseDown = (e) => {
@@ -38,14 +74,14 @@ export default function Game({ onExit, onMissionStart, levelCompleted = false })
         e.preventDefault()
         e.stopPropagation()
         playSound('/sounds/mission-start.mp3', 0.6)
-        onMissionStart?.()
+        onMissionStart?.(selectedMissionIndex)
       }
     }
     document.addEventListener('mousedown', handleMouseDown, true) // Use capture phase
     return () => {
       document.removeEventListener('mousedown', handleMouseDown, true)
     }
-  }, [sitting, missionReady, onMissionStart, playSound])
+  }, [sitting, missionReady, onMissionStart, playSound, selectedMissionIndex])
 
   // 1.5 s loading phase, then reveal mission button
   useEffect(() => {
@@ -129,7 +165,13 @@ export default function Game({ onExit, onMissionStart, levelCompleted = false })
         <CeilingLights />
 
         <Physics gravity={[0, -9.81, 0]}>
-          <ArcadeRoom chairBodyRef={chairBodyRef} sitting={sitting} missionReady={missionReady} />
+          <ArcadeRoom
+            chairBodyRef={chairBodyRef}
+            sitting={sitting}
+            missionReady={missionReady}
+            selectedMissionIndex={selectedMissionIndex}
+            missionOptions={missionOptions}
+          />
           <PlayerBody />
           <FirstPersonControls
             onLock={() => setIsLocked(true)}

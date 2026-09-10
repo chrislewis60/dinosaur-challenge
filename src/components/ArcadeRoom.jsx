@@ -122,7 +122,7 @@ function CeilingLight({ position, color = '#fff8e7', intensity = 2.5 }) {
 
 // ── Room props ────────────────────────────────────────────────────────────────
 
-function drawCenterMonitor(canvas, sitting, missionReady) {
+function drawCenterMonitor(canvas, sitting, missionReady, missionOptions = [{ label: 'WAREHOUSE' }, { label: 'POLICE HQ' }], selectedMissionIndex = 0) {
   const ctx = canvas.getContext('2d')
   const W = 860, H = 510
   ctx.clearRect(0, 0, W, H)
@@ -160,34 +160,41 @@ function drawCenterMonitor(canvas, sitting, missionReady) {
   } else {
     ctx.textAlign = 'center'
     ctx.fillStyle = '#a8daff'
+    ctx.font = 'bold 28px "Exo 2", sans-serif'
+    ctx.fillText('MISSION SELECT', W / 2, 120)
+    ctx.font = '16px "Share Tech Mono", monospace'
+    ctx.fillStyle = 'rgba(120, 200, 255, 0.7)'
+    ctx.fillText('LEFT / RIGHT ONLY', W / 2, 156)
+
+    const activeMission = missionOptions[selectedMissionIndex] || missionOptions[0]
+
+    ctx.fillStyle = '#a8daff'
     ctx.font = 'bold 36px "Exo 2", sans-serif'
     ctx.shadowBlur = 24; ctx.shadowColor = 'rgba(120, 200, 255, 0.9)'
-    ctx.fillText('!! MISSION AVAILABLE !!', W / 2, 165)
+    ctx.fillText(activeMission.label, W / 2, 245)
     ctx.shadowBlur = 0
-    // button border
+
     ctx.strokeStyle = 'rgba(120, 200, 255, 0.55)'
     ctx.lineWidth = 1.5
-    ctx.strokeRect(W / 2 - 350, 255, 700, 74)
+    ctx.strokeRect(W / 2 - 320, 290, 640, 74)
     ctx.fillStyle = 'rgba(120, 200, 255, 0.05)'
-    ctx.fillRect(W / 2 - 350, 255, 700, 74)
-    // button text
+    ctx.fillRect(W / 2 - 320, 290, 640, 74)
+
     ctx.fillStyle = '#a8daff'
-    ctx.font = 'bold 21px "Exo 2", sans-serif'
-    ctx.shadowBlur = 8; ctx.shadowColor = 'rgba(120,200,255,0.6)'
-    ctx.fillText('\u25b6  START MISSION', W / 2, 300)
-    ctx.shadowBlur = 0
-    // subtitle
-    ctx.font = '22px "Share Tech Mono", monospace'
+    ctx.font = 'bold 18px "Exo 2", sans-serif'
+    ctx.fillText('<<  SELECT  >>', W / 2, 336)
+
+    ctx.font = '18px "Share Tech Mono", monospace'
     ctx.fillStyle = 'rgba(120, 200, 255, 0.65)'
-    ctx.fillText('GET EVERY HIGH SCORE BACK', W / 2, 372)
+    ctx.fillText('CLICK TO START MISSION', W / 2, 395)
     ctx.font = '13px "Share Tech Mono", monospace'
     ctx.fillStyle = 'rgba(120, 200, 255, 0.3)'
-    ctx.fillText('CLICK TO START MISSION', W / 2, 440)
+    ctx.fillText('USE LEFT / RIGHT ARROWS TO PICK', W / 2, 440)
     ctx.textAlign = 'left'
   }
 }
 
-function GamingDesk({ position, rotation = [0, 0, 0], sitting = false, missionReady = false }) {
+function GamingDesk({ position, rotation = [0, 0, 0], sitting = false, missionReady = false, missionOptions = [{ label: 'WAREHOUSE' }, { label: 'POLICE HQ' }], selectedMissionIndex = 0 }) {
   const centerCanvas = useMemo(() => {
     const c = document.createElement('canvas')
     c.width = 860; c.height = 510
@@ -196,9 +203,9 @@ function GamingDesk({ position, rotation = [0, 0, 0], sitting = false, missionRe
   const centerTex = useMemo(() => new THREE.CanvasTexture(centerCanvas), [centerCanvas])
 
   useEffect(() => {
-    drawCenterMonitor(centerCanvas, sitting, missionReady)
+    drawCenterMonitor(centerCanvas, sitting, missionReady, missionOptions, selectedMissionIndex)
     centerTex.needsUpdate = true
-  }, [sitting, missionReady, centerCanvas, centerTex])
+  }, [sitting, missionReady, centerCanvas, centerTex, missionOptions, selectedMissionIndex])
 
   return (
     <group position={position} rotation={rotation}>
@@ -659,7 +666,7 @@ function PacManCabinet({ position, rotation = [0, 0, 0] }) {
 
 // ── Main Room ─────────────────────────────────────────────────────────────────
 
-export default function ArcadeRoom({ chairBodyRef, sitting = false, missionReady = false }) {
+export default function ArcadeRoom({ chairBodyRef, sitting = false, missionReady = false, missionOptions = [{ label: 'WAREHOUSE' }, { label: 'POLICE HQ' }], selectedMissionIndex = 0 }) {
   const wallTexture = useTexture('/chrislewis60_a_dino_playing_a_futureistic_game_--v_8.1_5a6897a9-48a8-4f99-896d-d781db395241_2.png')
   wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping
   wallTexture.repeat.set(1.5, 1)
@@ -718,7 +725,13 @@ export default function ArcadeRoom({ chairBodyRef, sitting = false, missionReady
       </mesh>
 
       {/* ── GAMING DESK & CHAIR ── */}
-      <GamingDesk position={[0, 0, -3.8]} sitting={sitting} missionReady={missionReady} />
+      <GamingDesk
+        position={[0, 0, -3.8]}
+        sitting={sitting}
+        missionReady={missionReady}
+        missionOptions={missionOptions}
+        selectedMissionIndex={selectedMissionIndex}
+      />
       <GamingChair position={[0, 0, -2.6]} rotation={[0, Math.PI, 0]} bodyRef={chairBodyRef} />
 
       {/* ── SERVER RACK — left corner ── */}

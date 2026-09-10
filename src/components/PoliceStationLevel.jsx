@@ -46,6 +46,11 @@ export default function PoliceStationLevel({ onExit, onComplete }) {
 
   const playerPosRef = useRef({ x: 0, z: 20 })
   const { play: playSound } = useSoundManager()
+  const wallColliders = [
+    { cx: -3, cz: 0, hw: 0.5, hd: 30 },
+    { cx: 3, cz: 0, hw: 0.5, hd: 30 },
+    { cx: 0, cz: -30, hw: 3.0, hd: 0.5 },
+  ]
 
   // F key — access terminal to complete mission
   useEffect(() => {
@@ -184,7 +189,9 @@ export default function PoliceStationLevel({ onExit, onComplete }) {
           <FirstPersonControls
             onLock={() => setIsLocked(true)}
             onUnlock={() => setIsLocked(false)}
-            roomBounds={25}
+            roomBounds={35}
+            furnitureCollision={false}
+            staticColliders={wallColliders}
           />
           <PlayerTracker posRef={playerPosRef} />
         </Physics>

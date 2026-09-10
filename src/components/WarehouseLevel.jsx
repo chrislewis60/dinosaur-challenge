@@ -183,8 +183,8 @@ export default function WarehouseLevel({ onExit, onComplete }) {
     // Back wall — left and right of the server room doorway
     { cx: -16.25, cz: -24, hw: 13.75, hd: 0.2 },
     { cx:  16.25, cz: -24, hw: 13.75, hd: 0.2 },
-    // Server room door — removed once lock is picked
-    ...(!lockPicked ? [{ cx: 0, cz: -24.1, hw: 2.5, hd: 0.12 }] : []),
+    // Server room door stays solid while locked; it opens once the lock is picked
+    ...(!lockPicked ? [{ cx: 0, cz: -24.1, hw: 2.5, hd: 0.25 }] : []),
     // Server room walls
     { cx:  -7, cz: -29, hw: 0.2, hd: 5.2 },
     { cx:   7, cz: -29, hw: 0.2, hd: 5.2 },

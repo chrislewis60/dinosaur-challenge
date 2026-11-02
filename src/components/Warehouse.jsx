@@ -760,7 +760,7 @@ function Guard({ waypoints, speed = 1.9, walkFreq = 3.6, phaseOffset = 0, player
           </mesh>
         ))}
 
-        {/* Left arm - longer, wider T-Rex style */}
+        {/* Left arm - original warehouse legacy pose */}
         <group ref={leftArmRef} position={[-0.30, 0.33, 0.10]}>
           <mesh position={[0, -0.12, 0]} castShadow>
             <cylinderGeometry args={[0.05, 0.04, 0.31, 6]} />
@@ -780,7 +780,7 @@ function Guard({ waypoints, speed = 1.9, walkFreq = 3.6, phaseOffset = 0, player
           </mesh>
         </group>
 
-        {/* Right arm - longer, wider T-Rex style */}
+        {/* Right arm - original warehouse legacy pose */}
         <group ref={rightArmRef} position={[0.30, 0.33, 0.10]}>
           <mesh position={[0, -0.12, 0]} castShadow>
             <cylinderGeometry args={[0.05, 0.04, 0.31, 6]} />

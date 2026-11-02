@@ -252,6 +252,8 @@ function Guard({ waypoints, speed = 1.5, playerPosRef, onCaught }) {
   const headRef = useRef()
   const leftArmRef = useRef()
   const rightArmRef = useRef()
+  const leftElbowRef = useRef()
+  const rightElbowRef = useRef()
   const leftLegRef = useRef()
   const rightLegRef = useRef()
   const detectedRef = useRef(false)
@@ -322,14 +324,17 @@ function Guard({ waypoints, speed = 1.5, playerPosRef, onCaught }) {
     }
 
     const walk = Math.sin(state.clock.elapsedTime * 2.2)
+    const armSwing = walk * 0.52
     if (leftArmRef.current) {
-      leftArmRef.current.rotation.x = 0.9 + walk * 0.04
-      leftArmRef.current.rotation.z = 0.95
+      leftArmRef.current.rotation.x = armSwing
+      leftArmRef.current.rotation.z = 0.12
     }
     if (rightArmRef.current) {
-      rightArmRef.current.rotation.x = 0.9 - walk * 0.04
-      rightArmRef.current.rotation.z = -0.95
+      rightArmRef.current.rotation.x = -armSwing
+      rightArmRef.current.rotation.z = -0.12
     }
+    if (leftElbowRef.current) leftElbowRef.current.rotation.x = 0.9 + armSwing * 0.3
+    if (rightElbowRef.current) rightElbowRef.current.rotation.x = 0.9 - armSwing * 0.3
     if (leftLegRef.current) leftLegRef.current.rotation.x = -walk * 0.18
     if (rightLegRef.current) rightLegRef.current.rotation.x = walk * 0.18
     if (torsoRef.current) torsoRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.8) * 0.025
@@ -421,41 +426,37 @@ function Guard({ waypoints, speed = 1.5, playerPosRef, onCaught }) {
         <coneGeometry args={[0.08, 0.30, 8]} />
         <meshStandardMaterial color="#2a4020" roughness={0.8} />
       </mesh>
-      <group position={[-0.22, 0.82, 0.08]} rotation={[0.9, 0, 0.95]} ref={leftArmRef}>
-        <mesh position={[0, -0.08, 0]} castShadow>
-          <cylinderGeometry args={[0.04, 0.035, 0.24, 6]} />
-          <meshStandardMaterial color="#3d5c2e" roughness={0.8} />
+      <group position={[-0.23, 0.9, 0.08]} rotation={[0.15, 0, 0.25]} ref={leftArmRef}>
+        <mesh position={[0, 0, 0]} castShadow>
+          <cylinderGeometry args={[0.05, 0.04, 0.12, 6]} />
+          <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
         </mesh>
-        <mesh position={[0, -0.18, 0.02]} castShadow>
-          <boxGeometry args={[0.06, 0.05, 0.04]} />
-          <meshStandardMaterial color="#2a4020" roughness={0.9} />
-        </mesh>
-        <mesh position={[-0.02, -0.2, 0.03]} rotation={[0.4, 0.2, 0]}>
-          <coneGeometry args={[0.012, 0.05, 4]} />
-          <meshStandardMaterial color="#2a4020" roughness={0.7} />
-        </mesh>
-        <mesh position={[0.02, -0.2, 0.03]} rotation={[0.4, -0.2, 0]}>
-          <coneGeometry args={[0.012, 0.05, 4]} />
-          <meshStandardMaterial color="#2a4020" roughness={0.7} />
-        </mesh>
+        <group ref={leftElbowRef} position={[0, -0.08, 0]}>
+          <mesh position={[0, -0.08, 0]} rotation={[0.85, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.036, 0.03, 0.18, 6]} />
+            <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
+          </mesh>
+          <mesh position={[0, -0.17, 0.02]} castShadow>
+            <sphereGeometry args={[0.045, 8, 6]} />
+            <meshStandardMaterial color="#2a4020" roughness={0.8} />
+          </mesh>
+        </group>
       </group>
-      <group position={[0.22, 0.82, 0.08]} rotation={[0.9, 0, -0.95]} ref={rightArmRef}>
-        <mesh position={[0, -0.08, 0]} castShadow>
-          <cylinderGeometry args={[0.04, 0.035, 0.24, 6]} />
-          <meshStandardMaterial color="#3d5c2e" roughness={0.8} />
+      <group position={[0.23, 0.9, 0.08]} rotation={[0.15, 0, -0.25]} ref={rightArmRef}>
+        <mesh position={[0, 0, 0]} castShadow>
+          <cylinderGeometry args={[0.05, 0.04, 0.12, 6]} />
+          <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
         </mesh>
-        <mesh position={[0, -0.18, 0.02]} castShadow>
-          <boxGeometry args={[0.06, 0.05, 0.04]} />
-          <meshStandardMaterial color="#2a4020" roughness={0.9} />
-        </mesh>
-        <mesh position={[-0.02, -0.2, 0.03]} rotation={[0.4, 0.2, 0]}>
-          <coneGeometry args={[0.012, 0.05, 4]} />
-          <meshStandardMaterial color="#2a4020" roughness={0.7} />
-        </mesh>
-        <mesh position={[0.02, -0.2, 0.03]} rotation={[0.4, -0.2, 0]}>
-          <coneGeometry args={[0.012, 0.05, 4]} />
-          <meshStandardMaterial color="#2a4020" roughness={0.7} />
-        </mesh>
+        <group ref={rightElbowRef} position={[0, -0.08, 0]}>
+          <mesh position={[0, -0.08, 0]} rotation={[0.85, 0, 0]} castShadow>
+            <cylinderGeometry args={[0.036, 0.03, 0.18, 6]} />
+            <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
+          </mesh>
+          <mesh position={[0, -0.17, 0.02]} castShadow>
+            <sphereGeometry args={[0.045, 8, 6]} />
+            <meshStandardMaterial color="#2a4020" roughness={0.8} />
+          </mesh>
+        </group>
       </group>
       <mesh position={[-0.18, 0.18, 0.1]} castShadow ref={leftLegRef}>
         <cylinderGeometry args={[0.07, 0.07, 0.42, 8]} />
@@ -498,6 +499,263 @@ function ServerTerminal({ position, playerPosRef, onServerNear }) {
       </mesh>
       {/* Screen glow */}
       <pointLight position={[0, 0.55, 0.1]} color="#00ff00" intensity={1.5} distance={2} />
+    </group>
+  )
+}
+
+function StationAlertGuard({ playerPosRef, basePos = [0, 0, -24.5], triggerRange = 5.5 }) {
+  const guardRef = useRef()
+
+  useFrame((_, delta) => {
+    if (!guardRef.current || !playerPosRef) return
+
+    const px = playerPosRef.current.x
+    const pz = playerPosRef.current.z
+    const dist = Math.hypot(px - basePos[0], pz - basePos[2])
+    const shouldAlert = dist < triggerRange
+
+    const sideStep = px >= 0 ? -1.2 : 1.2
+    const targetX = shouldAlert ? sideStep : 0
+    const targetRot = shouldAlert ? (sideStep < 0 ? Math.PI / 2 : -Math.PI / 2) : 0
+
+    guardRef.current.position.x += (targetX - guardRef.current.position.x) * 0.02
+    guardRef.current.position.z += (basePos[2] - guardRef.current.position.z) * 0.02
+    const turnSpeed = 2.2
+    const diff = THREE.MathUtils.euclideanModulo(targetRot - guardRef.current.rotation.y + Math.PI, Math.PI * 2) - Math.PI
+    guardRef.current.rotation.y += diff * Math.min(1, delta * turnSpeed)
+  })
+
+  return (
+    <group ref={guardRef} position={basePos}>
+      <group position={[0, 0.1, 0]}>
+        <group position={[0, 0.82, -0.08]} rotation={[Math.PI / 2.2, 0, 0]}>
+          <mesh position={[0, -0.12, 0]} castShadow>
+            <cylinderGeometry args={[0.08, 0.07, 0.24, 10]} />
+            <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
+          </mesh>
+          <mesh position={[0, -0.12, 0.04]} rotation={[0, 0, 0]}>
+            <coneGeometry args={[0.04, 0.10, 5]} />
+            <meshStandardMaterial color="#2a4020" roughness={0.8} />
+          </mesh>
+          <group position={[0, -0.25, 0]} rotation={[0.25, 0, 0]}>
+            <mesh position={[0, -0.12, 0]} castShadow>
+              <cylinderGeometry args={[0.065, 0.055, 0.24, 10]} />
+              <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
+            </mesh>
+            <mesh position={[0, -0.12, 0.035]} rotation={[0, 0, 0]}>
+              <coneGeometry args={[0.035, 0.09, 5]} />
+              <meshStandardMaterial color="#2a4020" roughness={0.8} />
+            </mesh>
+            <group position={[0, -0.25, 0]} rotation={[0.25, 0, 0]}>
+              <mesh position={[0, -0.11, 0]} castShadow>
+                <cylinderGeometry args={[0.050, 0.040, 0.22, 10]} />
+                <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
+              </mesh>
+              <mesh position={[0, -0.11, 0.03]} rotation={[0, 0, 0]}>
+                <coneGeometry args={[0.03, 0.08, 5]} />
+                <meshStandardMaterial color="#2a4020" roughness={0.8} />
+              </mesh>
+              <group position={[0, -0.23, 0]} rotation={[0.25, 0, 0]}>
+                <mesh position={[0, -0.10, 0]} castShadow>
+                  <cylinderGeometry args={[0.035, 0.025, 0.20, 10]} />
+                  <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
+                </mesh>
+                <mesh position={[0, -0.10, 0.02]} rotation={[0, 0, 0]}>
+                  <coneGeometry args={[0.025, 0.07, 5]} />
+                  <meshStandardMaterial color="#2a4020" roughness={0.8} />
+                </mesh>
+                <group position={[0, -0.21, 0]} rotation={[0.22, 0, 0]}>
+                  <mesh position={[0, -0.09, 0]} castShadow>
+                    <cylinderGeometry args={[0.020, 0.012, 0.18, 8]} />
+                    <meshStandardMaterial color="#2a4020" roughness={0.85} />
+                  </mesh>
+                  <mesh position={[0, -0.22, 0]} rotation={[Math.PI, 0, 0]} castShadow>
+                    <coneGeometry args={[0.012, 0.12, 8]} />
+                    <meshStandardMaterial color="#2a4020" roughness={0.7} />
+                  </mesh>
+                </group>
+              </group>
+            </group>
+          </group>
+        </group>
+
+        <mesh position={[0, 0.88, 0]}>
+          <boxGeometry args={[0.45, 0.12, 0.30]} />
+          <meshStandardMaterial color="#2a4020" roughness={0.85} />
+        </mesh>
+
+        <group position={[-0.115, 0.80, 0]}>
+          <mesh position={[0, -0.17, 0]} castShadow>
+            <cylinderGeometry args={[0.10, 0.085, 0.40, 8]} />
+            <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
+          </mesh>
+          <group position={[0, -0.38, 0]}>
+            <mesh position={[0, 0, 0.058]}>
+              <boxGeometry args={[0.14, 0.11, 0.08]} />
+              <meshStandardMaterial color="#2a4020" roughness={0.8} />
+            </mesh>
+            <mesh position={[0, -0.19, 0]} castShadow>
+              <cylinderGeometry args={[0.08, 0.07, 0.34, 8]} />
+              <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
+            </mesh>
+            <mesh position={[0, -0.39, 0.06]} castShadow>
+              <boxGeometry args={[0.14, 0.08, 0.18]} />
+              <meshStandardMaterial color="#2a4020" roughness={0.9} />
+            </mesh>
+            {[-0.05, 0, 0.05].map((cx, ci) => (
+              <mesh key={ci} position={[cx, -0.43, 0.16]} rotation={[0.3, 0, 0]}>
+                <coneGeometry args={[0.02, 0.12, 4]} />
+                <meshStandardMaterial color="#1a1a1a" roughness={0.7} />
+              </mesh>
+            ))}
+            <mesh position={[0, -0.42, -0.08]} rotation={[-0.5, 0, 0]}>
+              <coneGeometry args={[0.025, 0.10, 4]} />
+              <meshStandardMaterial color="#1a1a1a" roughness={0.7} />
+            </mesh>
+          </group>
+        </group>
+
+        <group position={[0.115, 0.80, 0]}>
+          <mesh position={[0, -0.17, 0]} castShadow>
+            <cylinderGeometry args={[0.10, 0.085, 0.40, 8]} />
+            <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
+          </mesh>
+          <group position={[0, -0.38, 0]}>
+            <mesh position={[0, 0, 0.058]}>
+              <boxGeometry args={[0.14, 0.11, 0.08]} />
+              <meshStandardMaterial color="#2a4020" roughness={0.8} />
+            </mesh>
+            <mesh position={[0, -0.19, 0]} castShadow>
+              <cylinderGeometry args={[0.08, 0.07, 0.34, 8]} />
+              <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
+            </mesh>
+            <mesh position={[0, -0.39, 0.06]} castShadow>
+              <boxGeometry args={[0.14, 0.08, 0.18]} />
+              <meshStandardMaterial color="#2a4020" roughness={0.9} />
+            </mesh>
+            {[-0.05, 0, 0.05].map((cx, ci) => (
+              <mesh key={ci} position={[cx, -0.43, 0.16]} rotation={[0.3, 0, 0]}>
+                <coneGeometry args={[0.02, 0.12, 4]} />
+                <meshStandardMaterial color="#1a1a1a" roughness={0.7} />
+              </mesh>
+            ))}
+            <mesh position={[0, -0.42, -0.08]} rotation={[-0.5, 0, 0]}>
+              <coneGeometry args={[0.025, 0.10, 4]} />
+              <meshStandardMaterial color="#1a1a1a" roughness={0.7} />
+            </mesh>
+          </group>
+        </group>
+
+        <group position={[0, 0.92, 0]} rotation={[0.2, 0, 0]}>
+          <mesh position={[0, 0.28, 0]} castShadow>
+            <boxGeometry args={[0.42, 0.55, 0.35]} />
+            <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
+          </mesh>
+          <mesh position={[0, 0.20, 0.18]}>
+            <boxGeometry args={[0.35, 0.45, 0.02]} />
+            <meshStandardMaterial color="#6b8f5a" roughness={0.9} />
+          </mesh>
+          {[0.15, 0.28, 0.41].map((ry, ri) => (
+            <mesh key={ri} position={[0, ry, -0.15]} rotation={[0.3, 0, 0]}>
+              <coneGeometry args={[0.06, 0.12, 4]} />
+              <meshStandardMaterial color="#2a4020" roughness={0.8} />
+            </mesh>
+          ))}
+
+          {[-0.24, 0.24].map((sx, si) => (
+            <mesh key={si} position={[sx, 0.45, 0.08]}>
+              <sphereGeometry args={[0.09, 8, 6]} />
+              <meshStandardMaterial color="#2a4020" roughness={0.8} />
+            </mesh>
+          ))}
+
+          <group position={[-0.30, 0.38, 0.10]}>
+            <mesh position={[0, -0.12, 0]} castShadow>
+              <cylinderGeometry args={[0.05, 0.04, 0.31, 6]} />
+              <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
+            </mesh>
+            <mesh position={[0, -0.25, 0.03]} castShadow>
+              <boxGeometry args={[0.09, 0.08, 0.06]} />
+              <meshStandardMaterial color="#2a4020" roughness={0.9} />
+            </mesh>
+            <mesh position={[-0.025, -0.29, 0.05]} rotation={[0.4, 0.2, 0]}>
+              <coneGeometry args={[0.014, 0.07, 4]} />
+              <meshStandardMaterial color="#1a1a1a" roughness={0.7} />
+            </mesh>
+            <mesh position={[0.025, -0.29, 0.05]} rotation={[0.4, -0.2, 0]}>
+              <coneGeometry args={[0.014, 0.07, 4]} />
+              <meshStandardMaterial color="#1a1a1a" roughness={0.7} />
+            </mesh>
+          </group>
+
+          <group position={[0.30, 0.38, 0.10]}>
+            <mesh position={[0, -0.12, 0]} castShadow>
+              <cylinderGeometry args={[0.05, 0.04, 0.31, 6]} />
+              <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
+            </mesh>
+            <mesh position={[0, -0.25, 0.03]} castShadow>
+              <boxGeometry args={[0.09, 0.08, 0.06]} />
+              <meshStandardMaterial color="#2a4020" roughness={0.9} />
+            </mesh>
+            <mesh position={[-0.025, -0.29, 0.05]} rotation={[0.4, 0.2, 0]}>
+              <coneGeometry args={[0.014, 0.07, 4]} />
+              <meshStandardMaterial color="#1a1a1a" roughness={0.7} />
+            </mesh>
+            <mesh position={[0.025, -0.29, 0.05]} rotation={[0.4, -0.2, 0]}>
+              <coneGeometry args={[0.014, 0.07, 4]} />
+              <meshStandardMaterial color="#1a1a1a" roughness={0.7} />
+            </mesh>
+          </group>
+
+          <mesh position={[0, 0.56, 0.10]} rotation={[-0.3, 0, 0]}>
+            <cylinderGeometry args={[0.10, 0.12, 0.16, 8]} />
+            <meshStandardMaterial color="#3d5c2e" roughness={0.8} />
+          </mesh>
+
+          <group position={[0, 0.68, 0.18]}>
+            <mesh position={[0, 0.06, 0.16]} castShadow>
+              <boxGeometry args={[0.22, 0.24, 0.40]} />
+              <meshStandardMaterial color="#3d5c2e" roughness={0.8} />
+            </mesh>
+            <mesh position={[0, 0.02, 0.42]} castShadow>
+              <boxGeometry args={[0.18, 0.18, 0.20]} />
+              <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
+            </mesh>
+            {[-0.05, 0.05].map((nx, ni) => (
+              <mesh key={ni} position={[nx, 0.06, 0.52]}>
+                <sphereGeometry args={[0.025, 6, 5]} />
+                <meshStandardMaterial color="#000" roughness={0.9} />
+              </mesh>
+            ))}
+            {[-0.07, -0.03, 0.01, 0.05].map((tx, ti) => (
+              <mesh key={ti} position={[tx, -0.04, 0.44 + ti * 0.02]} rotation={[0.3, 0, 0]}>
+                <coneGeometry args={[0.015, 0.06, 4]} />
+                <meshStandardMaterial color="#e8e8e8" roughness={0.4} />
+              </mesh>
+            ))}
+            <mesh position={[0, -0.08, 0.34]}>
+              <boxGeometry args={[0.16, 0.08, 0.32]} />
+              <meshStandardMaterial color="#2a4020" roughness={0.85} />
+            </mesh>
+            {[-0.09, 0.09].map((ex, ei) => (
+              <mesh key={ei} position={[ex, 0.10, 0.32]}>
+                <sphereGeometry args={[0.04, 8, 6]} />
+                <meshStandardMaterial color="#ff3300" emissive="#ff3300" emissiveIntensity={2.0} />
+              </mesh>
+            ))}
+            <mesh position={[0, 0.18, 0.08]} rotation={[-0.2, 0, 0]}>
+              <boxGeometry args={[0.18, 0.08, 0.25]} />
+              <meshStandardMaterial color="#2a4020" roughness={0.75} />
+            </mesh>
+            {[-0.08, 0.08].map((hx, hi) => (
+              <mesh key={hi} position={[hx, 0.20, 0.20]} rotation={[-0.5, 0, hx > 0 ? -0.3 : 0.3]}>
+                <coneGeometry args={[0.03, 0.10, 4]} />
+                <meshStandardMaterial color="#2a4020" roughness={0.8} />
+              </mesh>
+            ))}
+          </group>
+        </group>
+      </group>
     </group>
   )
 }
@@ -605,237 +863,7 @@ export default function PoliceStation({ playerPosRef, onCaught, onServerNear }) 
       </mesh>
       
       {/* Fixed warehouse guard directly in front of the terminal, using the same dinosaur proportions as the warehouse model */}
-      <group position={[0, 0, -24.5]}>
-        <group ref={null} position={[0, 0.1, 0]}>
-          <group position={[0, 0.82, -0.08]} rotation={[Math.PI / 2.2, 0, 0]}>
-            <mesh position={[0, -0.12, 0]} castShadow>
-              <cylinderGeometry args={[0.08, 0.07, 0.24, 10]} />
-              <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
-            </mesh>
-            <mesh position={[0, -0.12, 0.04]} rotation={[0, 0, 0]}>
-              <coneGeometry args={[0.04, 0.10, 5]} />
-              <meshStandardMaterial color="#2a4020" roughness={0.8} />
-            </mesh>
-            <group position={[0, -0.25, 0]} rotation={[0.25, 0, 0]}>
-              <mesh position={[0, -0.12, 0]} castShadow>
-                <cylinderGeometry args={[0.065, 0.055, 0.24, 10]} />
-                <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
-              </mesh>
-              <mesh position={[0, -0.12, 0.035]} rotation={[0, 0, 0]}>
-                <coneGeometry args={[0.035, 0.09, 5]} />
-                <meshStandardMaterial color="#2a4020" roughness={0.8} />
-              </mesh>
-              <group position={[0, -0.25, 0]} rotation={[0.25, 0, 0]}>
-                <mesh position={[0, -0.11, 0]} castShadow>
-                  <cylinderGeometry args={[0.050, 0.040, 0.22, 10]} />
-                  <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
-                </mesh>
-                <mesh position={[0, -0.11, 0.03]} rotation={[0, 0, 0]}>
-                  <coneGeometry args={[0.03, 0.08, 5]} />
-                  <meshStandardMaterial color="#2a4020" roughness={0.8} />
-                </mesh>
-                <group position={[0, -0.23, 0]} rotation={[0.25, 0, 0]}>
-                  <mesh position={[0, -0.10, 0]} castShadow>
-                    <cylinderGeometry args={[0.035, 0.025, 0.20, 10]} />
-                    <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
-                  </mesh>
-                  <mesh position={[0, -0.10, 0.02]} rotation={[0, 0, 0]}>
-                    <coneGeometry args={[0.025, 0.07, 5]} />
-                    <meshStandardMaterial color="#2a4020" roughness={0.8} />
-                  </mesh>
-                  <group position={[0, -0.21, 0]} rotation={[0.22, 0, 0]}>
-                    <mesh position={[0, -0.09, 0]} castShadow>
-                      <cylinderGeometry args={[0.020, 0.012, 0.18, 8]} />
-                      <meshStandardMaterial color="#2a4020" roughness={0.85} />
-                    </mesh>
-                    <mesh position={[0, -0.22, 0]} rotation={[Math.PI, 0, 0]} castShadow>
-                      <coneGeometry args={[0.012, 0.12, 8]} />
-                      <meshStandardMaterial color="#2a4020" roughness={0.7} />
-                    </mesh>
-                  </group>
-                </group>
-              </group>
-            </group>
-          </group>
-
-          <mesh position={[0, 0.88, 0]}>
-            <boxGeometry args={[0.45, 0.12, 0.30]} />
-            <meshStandardMaterial color="#2a4020" roughness={0.85} />
-          </mesh>
-
-          <group position={[-0.115, 0.80, 0]}>
-            <mesh position={[0, -0.17, 0]} castShadow>
-              <cylinderGeometry args={[0.10, 0.085, 0.40, 8]} />
-              <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
-            </mesh>
-            <group position={[0, -0.38, 0]}>
-              <mesh position={[0, 0, 0.058]}>
-                <boxGeometry args={[0.14, 0.11, 0.08]} />
-                <meshStandardMaterial color="#2a4020" roughness={0.8} />
-              </mesh>
-              <mesh position={[0, -0.19, 0]} castShadow>
-                <cylinderGeometry args={[0.08, 0.07, 0.34, 8]} />
-                <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
-              </mesh>
-              <mesh position={[0, -0.39, 0.06]} castShadow>
-                <boxGeometry args={[0.14, 0.08, 0.18]} />
-                <meshStandardMaterial color="#2a4020" roughness={0.9} />
-              </mesh>
-              {[-0.05, 0, 0.05].map((cx, ci) => (
-                <mesh key={ci} position={[cx, -0.43, 0.16]} rotation={[0.3, 0, 0]}>
-                  <coneGeometry args={[0.02, 0.12, 4]} />
-                  <meshStandardMaterial color="#1a1a1a" roughness={0.7} />
-                </mesh>
-              ))}
-              <mesh position={[0, -0.42, -0.08]} rotation={[-0.5, 0, 0]}>
-                <coneGeometry args={[0.025, 0.10, 4]} />
-                <meshStandardMaterial color="#1a1a1a" roughness={0.7} />
-              </mesh>
-            </group>
-          </group>
-
-          <group position={[0.115, 0.80, 0]}>
-            <mesh position={[0, -0.17, 0]} castShadow>
-              <cylinderGeometry args={[0.10, 0.085, 0.40, 8]} />
-              <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
-            </mesh>
-            <group position={[0, -0.38, 0]}>
-              <mesh position={[0, 0, 0.058]}>
-                <boxGeometry args={[0.14, 0.11, 0.08]} />
-                <meshStandardMaterial color="#2a4020" roughness={0.8} />
-              </mesh>
-              <mesh position={[0, -0.19, 0]} castShadow>
-                <cylinderGeometry args={[0.08, 0.07, 0.34, 8]} />
-                <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
-              </mesh>
-              <mesh position={[0, -0.39, 0.06]} castShadow>
-                <boxGeometry args={[0.14, 0.08, 0.18]} />
-                <meshStandardMaterial color="#2a4020" roughness={0.9} />
-              </mesh>
-              {[-0.05, 0, 0.05].map((cx, ci) => (
-                <mesh key={ci} position={[cx, -0.43, 0.16]} rotation={[0.3, 0, 0]}>
-                  <coneGeometry args={[0.02, 0.12, 4]} />
-                  <meshStandardMaterial color="#1a1a1a" roughness={0.7} />
-                </mesh>
-              ))}
-              <mesh position={[0, -0.42, -0.08]} rotation={[-0.5, 0, 0]}>
-                <coneGeometry args={[0.025, 0.10, 4]} />
-                <meshStandardMaterial color="#1a1a1a" roughness={0.7} />
-              </mesh>
-            </group>
-          </group>
-
-          <group position={[0, 0.92, 0]} rotation={[0.2, 0, 0]}>
-            <mesh position={[0, 0.28, 0]} castShadow>
-              <boxGeometry args={[0.42, 0.55, 0.35]} />
-              <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
-            </mesh>
-            <mesh position={[0, 0.20, 0.18]}>
-              <boxGeometry args={[0.35, 0.45, 0.02]} />
-              <meshStandardMaterial color="#6b8f5a" roughness={0.9} />
-            </mesh>
-            {[0.15, 0.28, 0.41].map((ry, ri) => (
-              <mesh key={ri} position={[0, ry, -0.15]} rotation={[0.3, 0, 0]}>
-                <coneGeometry args={[0.06, 0.12, 4]} />
-                <meshStandardMaterial color="#2a4020" roughness={0.8} />
-              </mesh>
-            ))}
-
-            {[-0.24, 0.24].map((sx, si) => (
-              <mesh key={si} position={[sx, 0.45, 0.08]}>
-                <sphereGeometry args={[0.06, 8, 6]} />
-                <meshStandardMaterial color="#2a4020" roughness={0.8} />
-              </mesh>
-            ))}
-
-            <group position={[-0.24, 0.38, 0.05]} rotation={[0.35, 0.15, 0.65]}>
-              <mesh position={[0, -0.08, 0]} castShadow>
-                <cylinderGeometry args={[0.04, 0.035, 0.18, 6]} />
-                <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
-              </mesh>
-              <mesh position={[0.02, -0.17, 0.04]} castShadow>
-                <boxGeometry args={[0.06, 0.05, 0.04]} />
-                <meshStandardMaterial color="#2a4020" roughness={0.9} />
-              </mesh>
-              <mesh position={[-0.02, -0.19, 0.06]} rotation={[0.45, 0.2, 0]}>
-                <coneGeometry args={[0.012, 0.05, 4]} />
-                <meshStandardMaterial color="#1a1a1a" roughness={0.7} />
-              </mesh>
-              <mesh position={[0.06, -0.18, 0.04]} rotation={[0.45, -0.1, 0]}>
-                <coneGeometry args={[0.012, 0.05, 4]} />
-                <meshStandardMaterial color="#1a1a1a" roughness={0.7} />
-              </mesh>
-            </group>
-
-            <group position={[0.24, 0.38, 0.05]} rotation={[0.35, -0.15, -0.65]}>
-              <mesh position={[0, -0.08, 0]} castShadow>
-                <cylinderGeometry args={[0.04, 0.035, 0.18, 6]} />
-                <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
-              </mesh>
-              <mesh position={[-0.02, -0.17, 0.04]} castShadow>
-                <boxGeometry args={[0.06, 0.05, 0.04]} />
-                <meshStandardMaterial color="#2a4020" roughness={0.9} />
-              </mesh>
-              <mesh position={[0.02, -0.19, 0.06]} rotation={[0.45, -0.2, 0]}>
-                <coneGeometry args={[0.012, 0.05, 4]} />
-                <meshStandardMaterial color="#1a1a1a" roughness={0.7} />
-              </mesh>
-              <mesh position={[-0.06, -0.18, 0.04]} rotation={[0.45, 0.1, 0]}>
-                <coneGeometry args={[0.012, 0.05, 4]} />
-                <meshStandardMaterial color="#1a1a1a" roughness={0.7} />
-              </mesh>
-            </group>
-
-            <mesh position={[0, 0.56, 0.10]} rotation={[-0.3, 0, 0]}>
-              <cylinderGeometry args={[0.10, 0.12, 0.16, 8]} />
-              <meshStandardMaterial color="#3d5c2e" roughness={0.8} />
-            </mesh>
-
-            <group position={[0, 0.68, 0.18]}>
-              <mesh position={[0, 0.06, 0.16]} castShadow>
-                <boxGeometry args={[0.22, 0.24, 0.40]} />
-                <meshStandardMaterial color="#3d5c2e" roughness={0.8} />
-              </mesh>
-              <mesh position={[0, 0.02, 0.42]} castShadow>
-                <boxGeometry args={[0.18, 0.18, 0.20]} />
-                <meshStandardMaterial color="#3d5c2e" roughness={0.85} />
-              </mesh>
-              {[-0.05, 0.05].map((nx, ni) => (
-                <mesh key={ni} position={[nx, 0.06, 0.52]}>
-                  <sphereGeometry args={[0.025, 6, 5]} />
-                  <meshStandardMaterial color="#000" roughness={0.9} />
-                </mesh>
-              ))}
-              {[-0.07, -0.03, 0.01, 0.05].map((tx, ti) => (
-                <mesh key={ti} position={[tx, -0.04, 0.44 + ti * 0.02]} rotation={[0.3, 0, 0]}>
-                  <coneGeometry args={[0.015, 0.06, 4]} />
-                  <meshStandardMaterial color="#e8e8e8" roughness={0.4} />
-                </mesh>
-              ))}
-              <mesh position={[0, -0.08, 0.34]}>
-                <boxGeometry args={[0.16, 0.08, 0.32]} />
-                <meshStandardMaterial color="#2a4020" roughness={0.85} />
-              </mesh>
-              {[-0.09, 0.09].map((ex, ei) => (
-                <mesh key={ei} position={[ex, 0.10, 0.32]}>
-                  <sphereGeometry args={[0.04, 8, 6]} />
-                  <meshStandardMaterial color="#ff3300" emissive="#ff3300" emissiveIntensity={2.0} />
-                </mesh>
-              ))}
-              <mesh position={[0, 0.18, 0.08]} rotation={[-0.2, 0, 0]}>
-                <boxGeometry args={[0.18, 0.08, 0.25]} />
-                <meshStandardMaterial color="#2a4020" roughness={0.75} />
-              </mesh>
-              {[-0.08, 0.08].map((hx, hi) => (
-                <mesh key={hi} position={[hx, 0.20, 0.20]} rotation={[-0.5, 0, hx > 0 ? -0.3 : 0.3]}>
-                  <coneGeometry args={[0.03, 0.10, 4]} />
-                  <meshStandardMaterial color="#2a4020" roughness={0.8} />
-                </mesh>
-              ))}
-            </group>
-          </group>
-        </group>
-      </group>
+      <StationAlertGuard playerPosRef={playerPosRef} />
 
       {/* Server terminal - objective location - inside the corridor, not in the wall */}
       <ServerTerminal 
